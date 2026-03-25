@@ -4431,36 +4431,26 @@
       function bulkAddFaq(id) {
         var b = getBl(id);
         if (!b) return;
-        var text = prompt("Paste Q&A pairs — alternating lines:\nQuestion 1\nAnswer 1\n\nQuestion 2\nAnswer 2");
+        var text = prompt("Paste Q&A pairs — alternating lines:\nQuestion 1\nAnswer 1\nQuestion 2\nAnswer 2");
         if (!text) return;
-        var pairs = text
-          .split(/\n\s*\n/)
-          .map(function (p) {
-            return p.trim();
-          })
-          .filter(function (p) {
-            return p.length > 0;
-          });
+        // Normalize line endings (handles Windows \r\n and old Mac \r)
+        var lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n")
+          .split("\n")
+          .map(function (l) { return l.trim(); })
+          .filter(function (l) { return l.length > 0; });
         var added = 0;
-        pairs.forEach(function (pair) {
-          var lines = pair
-            .split("\n")
-            .map(function (l) {
-              return l.trim();
-            })
-            .filter(function (l) {
-              return l.length > 0;
-            });
-          if (lines.length >= 2) {
-            b.items.push({ q: lines[0], a: lines[1] });
-            added++;
-          }
-        });
+        for (var i = 0; i + 1 < lines.length; i += 2) {
+          b.items.push({ q: lines[i], a: lines[i + 1] });
+          added++;
+        }
         if (!added) {
           toast("No valid pairs found. Use alternating lines format", "#5a2020");
           return;
         }
-        if (b.items.length > added && !b.items[0].q && !b.items[0].a) b.items.splice(0, 1);
+        // Remove any leftover empty items
+        b.items = b.items.filter(function (item) {
+          return (item.q && item.q.trim()) || (item.a && item.a.trim());
+        });
         renderBlocks();
         go();
         toast(added + " Q&A pairs added", "#1a4e2a");
