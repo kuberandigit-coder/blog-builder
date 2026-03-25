@@ -4134,6 +4134,9 @@
             imgH: 400,
             pairH: 280,
             tripleH: 220,
+            imgHM: 200,
+            pairHM: 160,
+            tripleHM: 140,
           });
         else if (type === "cta")
           Object.assign(b, { ctaStyle: "filled", label: "", desc: "", text: "", link: "", align: "center" });
@@ -5099,12 +5102,19 @@
                 "','imgW',parseInt(this.value));this.nextElementSibling.textContent=this.value+'%'\"><span class=\"rval\">" +
                 (b.imgW || 100) +
                 "%</span></div>" +
-                '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">Height px</span><input type="range" min="80" max="900" step="10" value="' +
+                '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">🖥 Desktop H</span><input type="range" min="80" max="900" step="10" value="' +
                 (b.imgH || 400) +
                 '" oninput="onIn(\'' +
                 b.id +
                 "','imgH',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px'\"><span class=\"rval\">" +
                 (b.imgH || 400) +
+                "px</span></div>" +
+                '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">📱 Mobile H</span><input type="range" min="60" max="500" step="10" value="' +
+                (b.imgHM || 200) +
+                '" oninput="onIn(\'' +
+                b.id +
+                "','imgHM',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px'\"><span class=\"rval\">" +
+                (b.imgHM || 200) +
                 "px</span></div>";
             else if (b.imageType === "pair")
               ex =
@@ -5129,12 +5139,19 @@
                 '" oninput="onIn(\'' +
                 b.id +
                 "','imgRLink',this.value)\"></div>" +
-                '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">Height px</span><input type="range" min="80" max="700" step="10" value="' +
+                '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">🖥 Desktop H</span><input type="range" min="80" max="700" step="10" value="' +
                 (b.pairH || 280) +
                 '" oninput="onIn(\'' +
                 b.id +
                 "','pairH',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px'\"><span class=\"rval\">" +
                 (b.pairH || 280) +
+                "px</span></div>" +
+                '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">📱 Mobile H</span><input type="range" min="60" max="400" step="10" value="' +
+                (b.pairHM || 160) +
+                '" oninput="onIn(\'' +
+                b.id +
+                "','pairHM',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px'\"><span class=\"rval\">" +
+                (b.pairHM || 160) +
                 "px</span></div>" +
                 '<input type="text" class="fc" placeholder="Caption (optional)" value="' +
                 ea(b.caption) +
@@ -5174,12 +5191,19 @@
                 '" oninput="onIn(\'' +
                 b.id +
                 "','imgRLink',this.value)\"></div>" +
-                '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">Height px</span><input type="range" min="80" max="600" step="10" value="' +
+                '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">🖥 Desktop H</span><input type="range" min="80" max="600" step="10" value="' +
                 (b.tripleH || 220) +
                 '" oninput="onIn(\'' +
                 b.id +
                 "','tripleH',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px'\"><span class=\"rval\">" +
                 (b.tripleH || 220) +
+                "px</span></div>" +
+                '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">📱 Mobile H</span><input type="range" min="60" max="350" step="10" value="' +
+                (b.tripleHM || 140) +
+                '" oninput="onIn(\'' +
+                b.id +
+                "','tripleHM',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px'\"><span class=\"rval\">" +
+                (b.tripleHM || 140) +
                 "px</span></div>" +
                 '<input type="text" class="fc" placeholder="Caption (optional)" value="' +
                 ea(b.caption) +
@@ -6140,9 +6164,9 @@
           Math.min(s.hs, 32) +
           "px);}.sb{font-size:clamp(14px,3.8vw," +
           Math.min(s.bs, 18) +
-          "px);}.simg{height:clamp(160px,50vw,280px);}.pair{grid-template-columns:1fr;gap:8px;}.triple{grid-template-columns:1fr 1fr;gap:8px;}.pair-item img{height:clamp(160px,50vw,260px);}.triple-item img{height:clamp(130px,40vw,200px);}.section,.shop-block,.faq-block,.table-block,.hotspot-block,.hl-box,.bullets-block{margin-bottom:" +
+          "px);}.simg{height:clamp(160px,50vw,280px);}.pair{grid-template-columns:1fr;gap:8px;}.triple{grid-template-columns:1fr 1fr;gap:8px;}.triple-item:nth-child(3):last-child{grid-column:1/-1;}.triple-item:nth-child(3):last-child img{height:clamp(160px,50vw,260px);max-width:50%;margin:0 auto;display:block;}.pair-item img{height:clamp(160px,50vw,260px);}.triple-item img{height:clamp(130px,40vw,200px);}.section,.shop-block,.faq-block,.table-block,.hotspot-block,.hl-box,.bullets-block{margin-bottom:" +
           Math.round(s.sg * 0.65) +
-          "px;}.btn-filled,.btn-outline{display:block;text-align:center;width:100%;padding:14px 0;}.shop-grid-2{grid-template-columns:repeat(2,1fr);gap:14px;}.shop-grid-3,.shop-grid-4{grid-template-columns:repeat(2,1fr);gap:14px;}.shop-card-name{font-size:15px;}.shop-card-price{font-size:14px;}.blog-table th,.blog-table td{padding:9px 12px;font-size:" +
+          "px;}.btn-filled,.btn-outline{display:block;text-align:center;width:100%;padding:14px 0;}.shop-grid-2{grid-template-columns:repeat(2,1fr);gap:14px;}.shop-grid-3,.shop-grid-4{grid-template-columns:repeat(2,1fr);gap:14px;}.shop-grid-3 .shop-card:nth-child(3):last-child{grid-column:1/-1;max-width:calc(50% - 7px);margin:0 auto;}.shop-card-name{font-size:13px;}.shop-card-price{font-size:13px;}.blog-table th,.blog-table td{padding:9px 12px;font-size:" +
           (s.bs - 1) +
           "px;}.hs-dot{width:28px;height:28px;font-size:11px;}.hl-box{padding:18px 20px;font-size:" +
           (s.bs - 1) +
@@ -6178,16 +6202,20 @@
               h += "</div>\n";
             }
             if (b.imageType === "single" && b.imgUrl) {
+              var siMH = b.imgHM || 200;
+              h += '<style>@media(max-width:768px){#simg-' + b.id + '{height:' + siMH + 'px !important;}}</style>\n';
               var siStyle =
                 "width:" + (b.imgW || 100) + "%;height:" + (b.imgH || 400) + "px;object-fit:cover;display:block;";
-              var si = '<img class="simg" style="' + siStyle + '" src="' + ea(b.imgUrl) + '" alt="" loading="lazy">';
+              var si = '<img id="simg-' + b.id + '" class="simg" style="' + siStyle + '" src="' + ea(b.imgUrl) + '" alt="" loading="lazy">';
               h += b.imgLink
                 ? '<a href="' + ea(b.imgLink) + '" class="simg-wrap">' + si + "</a>\n"
                 : '<div class="simg-wrap">' + si + "</div>\n";
             }
             if (b.imageType === "pair") {
+              var pairMH = b.pairHM || 160;
+              h += '<style>@media(max-width:768px){#pair-' + b.id + ' img{height:' + pairMH + 'px !important;}}</style>\n';
               var pairStyle = "width:100%;height:" + (b.pairH || 280) + "px;object-fit:cover;display:block;";
-              h += '<div class="pair">\n';
+              h += '<div id="pair-' + b.id + '" class="pair">\n';
               if (b.imgL) {
                 var iL = '<img style="' + pairStyle + '" src="' + ea(b.imgL) + '" alt="" loading="lazy">';
                 h += b.imgLLink
@@ -6204,8 +6232,10 @@
               if (b.caption) h += '<p class="cap">' + eh(b.caption) + "</p>\n";
             }
             if (b.imageType === "triple") {
+              var triMH = b.tripleHM || 140;
+              h += '<style>@media(max-width:768px){#tri-' + b.id + ' img{height:' + triMH + 'px !important;}#tri-' + b.id + ' .triple-item:nth-child(3):last-child img{height:' + triMH + 'px !important;}}</style>\n';
               var triStyle = "width:100%;height:" + (b.tripleH || 220) + "px;object-fit:cover;display:block;";
-              h += '<div class="triple">\n';
+              h += '<div id="tri-' + b.id + '" class="triple">\n';
               if (b.imgL) {
                 var tL = '<img style="' + triStyle + '" src="' + ea(b.imgL) + '" alt="" loading="lazy">';
                 h += b.imgLLink
@@ -6256,11 +6286,9 @@
                 '<div class="shop-card">\n' +
                 '<div class="shop-card-img-wrap">\n' +
                 (card.img
-                  ? '<img class="shop-card-img" src="' +
-                    ea(card.img) +
-                    '" alt="' +
-                    eh(card.name) +
-                    '" loading="lazy">\n'
+                  ? (card.btnLink
+                      ? '<a href="' + ea(card.btnLink) + '" style="display:block;line-height:0;">\n<img class="shop-card-img" src="' + ea(card.img) + '" alt="' + eh(card.name) + '" loading="lazy">\n</a>\n'
+                      : '<img class="shop-card-img" src="' + ea(card.img) + '" alt="' + eh(card.name) + '" loading="lazy">\n')
                   : '<div class="shop-card-img" style="min-height:160px;"></div>\n') +
                 (card.discount ? '<span class="shop-card-badge">' + eh(card.discount) + "</span>\n" : "") +
                 "</div>\n" +
