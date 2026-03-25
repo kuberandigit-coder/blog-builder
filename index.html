@@ -4142,7 +4142,7 @@
         else if (type === "table") Object.assign(b, { heading: "", hasHeader: true, data: newTableData(3, 3) });
         else if (type === "hotspot") Object.assign(b, { heading: "", imgUrl: "", hotspots: [newHotspot(1)] });
         else if (type === "highlight") Object.assign(b, { hlStyle: "tip", label: "", text: "" });
-        else if (type === "bullets") Object.assign(b, { heading: "", listStyle: "bullet", items: [""] });
+        else if (type === "bullets") Object.assign(b, { heading: "", intro: "", listStyle: "bullet", items: [""] });
         blocks.push(b);
         _scrollToBottom = true;
         renderBlocks();
@@ -5798,6 +5798,11 @@
               '" oninput="onIn(\'' +
               b.id +
               "','heading',this.value)\">" +
+              '<textarea placeholder="Intro paragraph (optional)..." rows="2" oninput="onIn(\'' +
+              b.id +
+              "','intro',this.value)\">" +
+              eh(b.intro || "") +
+              "</textarea>" +
               '<div class="trow">' +
               '<button class="tbtn2' +
               (b.listStyle === "bullet" ? " on" : "") +
@@ -6122,7 +6127,7 @@
           s.hdg +
           ';margin-bottom:18px;line-height:1.2;letter-spacing:-.01em;}.bullets-list{padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;}.bullets-list.style-bullet li{display:flex;align-items:flex-start;}.bullets-list.style-bullet li::before{content:"•";color:' +
           s.hdg +
-          ";font-size:1.5em;font-weight:700;margin-right:10px;flex-shrink:0;line-height:" +
+          ";font-size:1.2em;font-weight:700;margin-right:10px;flex-shrink:0;margin-top:0.1px;line-height:" +
           s.lh +
           ';}.bullets-list.style-check li{display:flex;align-items:flex-start;}.bullets-list.style-check li::before{content:"✓";color:' +
           s.hdg +
@@ -6373,6 +6378,7 @@
           } else if (b.type === "bullets") {
             h += '<div class="bullets-block" data-block-id="' + b.id + '">\n';
             if (b.heading) h += '<h2 class="bullets-heading">' + eh(b.heading) + "</h2>\n";
+            if (b.intro) h += '<p class="bullets-intro">' + parseLinks(b.intro) + "</p>\n";
             var ls = b.listStyle || "bullet";
             var tag = ls === "number" ? "ol" : "ul";
             h += "<" + tag + ' class="bullets-list style-' + ls + '">\n';
@@ -6660,7 +6666,7 @@
           } else if (b.type === "highlight") {
             text += (b.label || "") + " " + (b.text || "") + " ";
           } else if (b.type === "bullets") {
-            text += (b.heading || "") + " ";
+            text += (b.heading || "") + " " + (b.intro || "") + " ";
             b.items.forEach(function (it) {
               text += (it || "") + " ";
             });
