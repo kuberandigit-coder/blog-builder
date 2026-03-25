@@ -775,7 +775,7 @@ function newHotspot(num){return{id:uid(),num:num,x:30,y:30,label:'Point '+num,de
 function addBlock(type){
   var b={id:uid(),type:type};
   if(type==='section')Object.assign(b,{imageType:'none',heading:'',text:'',imgUrl:'',imgLink:'',imgL:'',imgLLink:'',imgM:'',imgMLink:'',imgR:'',imgRLink:'',caption:'',imgW:100,imgH:400,pairH:280,tripleH:220});
-  else if(type==='cta')Object.assign(b,{ctaStyle:'filled',label:'',desc:'',text:'',link:''});
+  else if(type==='cta')Object.assign(b,{ctaStyle:'filled',label:'',desc:'',text:'',link:'',align:'center'});
   else if(type==='shop')Object.assign(b,{heading:'',cols:3,cards:[newCard()]});
   else if(type==='faq')Object.assign(b,{heading:'',items:[{q:'',a:''}]});
   else if(type==='table')Object.assign(b,{heading:'',hasHeader:true,data:newTableData(3,3)});
@@ -789,6 +789,7 @@ function moveBlock(id,d){var i=blocks.findIndex(function(b){return b.id===id;}),
 function getBl(id){return blocks.find(function(b){return b.id===id;});}
 function setImgType(id,t){var b=getBl(id);if(b)b.imageType=t;renderBlocks();go();}
 function setCtaSt(id,s){var b=getBl(id);if(b)b.ctaStyle=s;renderBlocks();go();}
+function setCtaAlign(id,a){var b=getBl(id);if(b)b.align=a;renderBlocks();go();}
 function setShopCols(id,c){var b=getBl(id);if(b)b.cols=parseInt(c);renderBlocks();go();}
 function setCardBtnSt(id,ci,s){var b=getBl(id);if(b&&b.cards[ci])b.cards[ci].btnStyle=s;renderBlocks();go();}
 function setHlStyle(id,s){var b=getBl(id);if(b)b.hlStyle=s;renderBlocks();go();}
@@ -1042,7 +1043,60 @@ function renderBlocks(){
   +'<input type="text" class="fc" placeholder="Caption (optional)" value="'+ea(b.caption)+'" oninput="onIn(\''+b.id+'\',\'caption\',this.value)">';
       body='<input type="text" class="fh" placeholder="Section heading" value="'+ea(b.heading)+'" oninput="onIn(\''+b.id+'\',\'heading\',this.value)"><div class="heading-link-row"><button class="heading-link-btn" onmousedown="_saveHdgSel(this)" onclick="openHdgLinkPopup(\'hlp-'+b.id+'\',this)">&#128279; Add Link to Heading</button><span class="heading-link-hint">Select heading text first</span><div class="link-popup" id="hlp-'+b.id+'"><div class="link-popup-label">&#128279; Wrap selection as link</div><div class="link-sel-preview" id="hlp-'+b.id+'-sel">No text selected</div><div class="link-popup-row"><input class="link-popup-input" type="url" placeholder="https://..." id="hlp-'+b.id+'-url"><button class="link-popup-ok" onclick="applyHdgLink(\'hlp-'+b.id+'\',\''+b.id+'\')">Apply</button><button class="link-popup-cancel" onclick="closeLinkPopup(\'hlp-'+b.id+'\')">&#10005;</button></div></div></div><textarea class="ft" placeholder="Body text..." rows="3" oninput="onIn(\''+b.id+'\',\'text\',this.value)">'+eh(b.text)+'</textarea>'+makeLinkBtn('s-'+b.id,'function(){go();}')+'<div class="trow"><button class="tbtn2'+(b.imageType==='none'?' on':'')+'" onclick="setImgType(\''+b.id+'\',\'none\')">No Image</button><button class="tbtn2'+(b.imageType==='single'?' on':'')+'" onclick="setImgType(\''+b.id+'\',\'single\')">1 Image</button><button class="tbtn2'+(b.imageType==='pair'?' on':'')+'" onclick="setImgType(\''+b.id+'\',\'pair\')">2 Images</button><button class="tbtn2'+(b.imageType==='triple'?' on':'')+'" onclick="setImgType(\''+b.id+'\',\'triple\')">3 Images</button></div>'+ex;
     }else if(b.type==='cta'){
-      body='<input type="text" class="fla" placeholder="Label / heading (optional)" value="'+ea(b.label)+'" oninput="onIn(\''+b.id+'\',\'label\',this.value)"><textarea class="fdesc" placeholder="Description text (optional)..." rows="3" oninput="onIn(\''+b.id+'\',\'desc\',this.value)">'+eh(b.desc||'')+'</textarea><input type="text" class="ft" placeholder="Button text" value="'+ea(b.text)+'" oninput="onIn(\''+b.id+'\',\'text\',this.value)"><input type="url" class="flk" placeholder="Button link URL" value="'+ea(b.link)+'" oninput="onIn(\''+b.id+'\',\'link\',this.value)"><div class="trow"><button class="tbtn2'+(b.ctaStyle==='filled'?' on':'')+'" onclick="setCtaSt(\''+b.id+'\',\'filled\')">Filled</button><button class="tbtn2'+(b.ctaStyle==='outline'?' on':'')+'" onclick="setCtaSt(\''+b.id+'\',\'outline\')">Outline</button><button class="tbtn2'+(b.ctaStyle==='underline'?' on':'')+'" onclick="setCtaSt(\''+b.id+'\',\'underline\')">Underline</button></div>';
+  var ctaAlign=b.align||'center';
+  var fpid='fcp-cta-'+b.id;
+  var lpid='lp-cta-'+b.id;
+  body=''
+    +'<input type="text" class="fla" placeholder="Label / heading (optional)" value="'+ea(b.label)+'" oninput="onIn(\''+b.id+'\',\'label\',this.value)">'
+    +'<textarea class="fdesc" placeholder="Description text (optional)..." rows="3" oninput="onIn(\''+b.id+'\',\'desc\',this.value)">'+eh(b.desc||'')+'</textarea>'
+    +'<div class="fmt-toolbar-row">'
+    +'<span class="fmt-hint">Select text:</span>'
+    +'<button class="fmt-btn fmt-btn-b" onmousedown="event.preventDefault()" onclick="applyFmt(this.closest(\'.bbody\').querySelector(\'.fdesc\'),\'bold\')">B</button>'
+    +'<button class="fmt-btn fmt-btn-i" onmousedown="event.preventDefault()" onclick="applyFmt(this.closest(\'.bbody\').querySelector(\'.fdesc\'),\'italic\')">I</button>'
+    +'<button class="fmt-btn fmt-btn-u" onmousedown="event.preventDefault()" onclick="applyFmt(this.closest(\'.bbody\').querySelector(\'.fdesc\'),\'underline\')">U</button>'
+    +'<div class="fmt-color-wrap">'
+    +'<button class="fmt-btn" onmousedown="event.preventDefault()" style="background:linear-gradient(135deg,#e53e3e,#d69e2e,#38a169,#3182ce,#805ad5);color:#fff;border-color:transparent;" onclick="openColorPopup(\''+fpid+'\',this.closest(\'.bbody\').querySelector(\'.fdesc\'))">A&#9660;</button>'
+    +'<div class="fmt-color-popup" id="'+fpid+'">'
+    +'<div class="fmt-color-label">&#127775; Text Color</div>'
+    +'<div class="cpk-wrap"><canvas class="cpk-canvas" width="160" height="120"></canvas><div class="cpk-cursor"></div><div class="cpk-hue-wrap"><canvas class="cpk-hue" width="16" height="120"></canvas><div class="cpk-hue-cursor"></div></div></div>'
+    +'<div class="fmt-color-row">'
+    +'<div class="cpk-preview"></div>'
+    +'<input class="fmt-color-input" type="text" placeholder="#hex" maxlength="20">'
+    +'<button class="fmt-color-ok" onclick="applyColorPopup(\''+fpid+'\',\'\')">Apply</button>'
+    +'<button class="fmt-color-cancel" onclick="closeColorPopup(\''+fpid+'\')">&#10005;</button>'
+    +'</div></div></div>'
+    +'</div>'
+    +'<div class="link-btn-row">'
+    +'<button class="link-btn" onclick="openLinkPopup(this,this.closest(\'.bbody\').querySelector(\'.fdesc\'))">&#128279; Link</button>'
+    +'<span class="link-btn-hint">Select text, then click</span>'
+    +'<div class="link-popup" id="'+lpid+'">'
+    +'<div class="link-popup-label">&#128279; Wrap selection as link</div>'
+    +'<div class="link-sel-preview" id="'+lpid+'-sel">No text selected</div>'
+    +'<div class="link-style-row"><span class="link-style-label">Style:</span>'
+    +'<button class="link-style-btn" id="'+lpid+'-bold" onclick="toggleLinkStyle(\''+lpid+'\',\'bold\')"><b>B</b></button>'
+    +'<button class="link-style-btn" id="'+lpid+'-italic" onclick="toggleLinkStyle(\''+lpid+'\',\'italic\')"><i>I</i></button>'
+    +'</div>'
+    +'<div class="link-popup-row">'
+    +'<input class="link-popup-input" type="url" placeholder="https://..." id="'+lpid+'-url">'
+    +'<button class="link-popup-ok" onclick="applyLinkPopup(\''+lpid+'\',this.closest(\'.bbody\').querySelector(\'.fdesc\'),function(){go();})">Apply</button>'
+    +'<button class="link-popup-cancel" onclick="closeLinkPopup(\''+lpid+'\')">&#10005;</button>'
+    +'</div></div>'
+    +'</div>'
+    +'<input type="text" class="ft" placeholder="Button text" value="'+ea(b.text)+'" oninput="onIn(\''+b.id+'\',\'text\',this.value)">'
+    +'<input type="url" class="flk" placeholder="Button link URL" value="'+ea(b.link)+'" oninput="onIn(\''+b.id+'\',\'link\',this.value)">'
+    +'<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:.08em;text-transform:uppercase;margin:6px 0 3px;">Button Style</div>'
+    +'<div class="trow">'
+    +'<button class="tbtn2'+(b.ctaStyle==='filled'?' on':'')+'" onclick="setCtaSt(\''+b.id+'\',\'filled\')">Filled</button>'
+    +'<button class="tbtn2'+(b.ctaStyle==='outline'?' on':'')+'" onclick="setCtaSt(\''+b.id+'\',\'outline\')">Outline</button>'
+    +'<button class="tbtn2'+(b.ctaStyle==='underline'?' on':'')+'" onclick="setCtaSt(\''+b.id+'\',\'underline\')">Underline</button>'
+    +'</div>'
+    +'<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:.08em;text-transform:uppercase;margin:6px 0 3px;">Alignment</div>'
+    +'<div class="trow">'
+    +'<button class="tbtn2'+(ctaAlign==='left'?' on':'')+'" onclick="setCtaAlign(\''+b.id+'\',\'left\')">&#8592; Left</button>'
+    +'<button class="tbtn2'+(ctaAlign==='center'?' on':'')+'" onclick="setCtaAlign(\''+b.id+'\',\'center\')">&#8596; Center</button>'
+    +'<button class="tbtn2'+(ctaAlign==='right'?' on':'')+'" onclick="setCtaAlign(\''+b.id+'\',\'right\')">&#8594; Right</button>'
+    +'</div>';
+
     }else if(b.type==='shop'){
       var cl='<div class="shop-cards-list">';
       b.cards.forEach(function(card,ci){cl+='<div class="shop-card-item"><div class="shop-card-item-head"><span class="shop-card-item-label">Card '+(ci+1)+'</span>'+(b.cards.length>1?'<button class="ibtn x" onclick="delCard(\''+b.id+'\','+ci+')">&#10005;</button>':'')+'</div><input type="url" placeholder="Product image URL" value="'+ea(card.img)+'" oninput="onInCard(\''+b.id+'\','+ci+',\'img\',this.value)"><input type="text" placeholder="Product name" value="'+ea(card.name)+'" oninput="onInCard(\''+b.id+'\','+ci+',\'name\',this.value)"><input type="text" placeholder="Price e.g.&#163;29.99" value="'+ea(card.price)+'" oninput="onInCard(\''+b.id+'\','+ci+',\'price\',this.value)"><input type="text" placeholder="Compare price e.g. &#163;39.99 (leave empty to hide)" value="'+ea(card.comparePrice||'')+'" oninput="onInCard(\''+b.id+'\','+ci+',\'comparePrice\',this.value)"><input type="text" placeholder="Discount badge e.g. 20% OFF (leave empty to hide)" value="'+ea(card.discount||'')+'" oninput="onInCard(\''+b.id+'\','+ci+',\'discount\',this.value)"><textarea placeholder="Short description..." rows="2" oninput="onInCard(\''+b.id+'\','+ci+',\'desc\',this.value)">'+eh(card.desc)+'</textarea><input type="text" placeholder="Button text" value="'+ea(card.btnText)+'" oninput="onInCard(\''+b.id+'\','+ci+',\'btnText\',this.value)"><input type="url" placeholder="Button link" value="'+ea(card.btnLink)+'" oninput="onInCard(\''+b.id+'\','+ci+',\'btnLink\',this.value)"><div class="trow"><button class="tbtn2'+(card.btnStyle==='filled'?' on':'')+'" onclick="setCardBtnSt(\''+b.id+'\','+ci+',\'filled\')">Filled</button><button class="tbtn2'+(card.btnStyle==='outline'?' on':'')+'" onclick="setCardBtnSt(\''+b.id+'\','+ci+',\'outline\')">Outline</button><button class="tbtn2'+(card.btnStyle==='underline'?' on':'')+'" onclick="setCardBtnSt(\''+b.id+'\','+ci+',\'underline\')">Underline</button></div></div>';});
@@ -1210,9 +1264,13 @@ function buildBody(){
      if(b.imageType==='pair'){var pairStyle='width:100%;height:'+(b.pairH||280)+'px;object-fit:cover;display:block;';h+='<div class="pair">\n';if(b.imgL){var iL='<img style="'+pairStyle+'" src="'+ea(b.imgL)+'" alt="" loading="lazy">';h+=(b.imgLLink?'<a href="'+ea(b.imgLLink)+'" class="pair-item">'+iL+'</a>\n':'<div class="pair-item">'+iL+'</div>\n');}if(b.imgR){var iR='<img style="'+pairStyle+'" src="'+ea(b.imgR)+'" alt="" loading="lazy">';h+=(b.imgRLink?'<a href="'+ea(b.imgRLink)+'" class="pair-item">'+iR+'</a>\n':'<div class="pair-item">'+iR+'</div>\n');}h+='</div>\n';if(b.caption)h+='<p class="cap">'+eh(b.caption)+'</p>\n';}
       if(b.imageType==='triple'){var triStyle='width:100%;height:'+(b.tripleH||220)+'px;object-fit:cover;display:block;';h+='<div class="triple">\n';if(b.imgL){var tL='<img style="'+triStyle+'" src="'+ea(b.imgL)+'" alt="" loading="lazy">';h+=(b.imgLLink?'<a href="'+ea(b.imgLLink)+'" class="triple-item">'+tL+'</a>\n':'<div class="triple-item">'+tL+'</div>\n');}if(b.imgM){var tM='<img style="'+triStyle+'" src="'+ea(b.imgM)+'" alt="" loading="lazy">';h+=(b.imgMLink?'<a href="'+ea(b.imgMLink)+'" class="triple-item">'+tM+'</a>\n':'<div class="triple-item">'+tM+'</div>\n');}if(b.imgR){var tR='<img style="'+triStyle+'" src="'+ea(b.imgR)+'" alt="" loading="lazy">';h+=(b.imgRLink?'<a href="'+ea(b.imgRLink)+'" class="triple-item">'+tR+'</a>\n':'<div class="triple-item">'+tR+'</div>\n');}h+='</div>\n';if(b.caption)h+='<p class="cap">'+eh(b.caption)+'</p>\n';}
       h+='</div>\n';
-    }else if(b.type==='cta'){
-      h+='<div class="cta-block" data-block-id="'+b.id+'">\n';if(b.label)h+='<h2 class="cta-heading">'+eh(b.label)+'</h2>\n';if(b.desc){h+='<div class="cta-desc">';b.desc.split('\n').forEach(function(l){if(l.trim())h+='<p>'+parseLinks(l)+'</p>';});h+='</div>\n';}
-      h+='<a href="'+ea(b.link||'#')+'" class="btn btn-'+(b.ctaStyle||'filled')+'">'+eh(b.text||'Shop Now')+'</a>\n</div>\n';
+  }else if(b.type==='cta'){
+  var ctaAlign=b.align||'center';
+  h+='<div class="cta-block" style="text-align:'+ctaAlign+';" data-block-id="'+b.id+'">\n';
+  if(b.label)h+='<h2 class="cta-heading">'+eh(b.label)+'</h2>\n';
+  if(b.desc){h+='<div class="cta-desc">';b.desc.split('\n').forEach(function(l){if(l.trim())h+='<p>'+parseLinks(l)+'</p>';});h+='</div>\n';}
+  h+='<a href="'+ea(b.link||'#')+'" class="btn btn-'+(b.ctaStyle||'filled')+'">'+eh(b.text||'Shop Now')+'</a>\n</div>\n';
+
     }else if(b.type==='shop'){
       h+='<div class="shop-block" data-block-id="'+b.id+'">\n';if(b.heading)h+='<h2 class="shop-heading">'+eh(b.heading)+'</h2>\n';
       h+='<div class="shop-grid-'+(b.cols||3)+'">\n';
