@@ -4215,7 +4215,7 @@
           num: num,
           x: 30,
           y: 30,
-          label: "Point " + num,
+          label: "",
           desc: "",
           link: "",
           backLink: "",
@@ -4252,7 +4252,7 @@
         else if (type === "shop") Object.assign(b, { heading: "", cols: 3, cards: [newCard()] });
         else if (type === "faq") Object.assign(b, { heading: "", items: [{ q: "", a: "" }] });
         else if (type === "table") Object.assign(b, { heading: "", hasHeader: true, data: newTableData(3, 3) });
-        else if (type === "hotspot") Object.assign(b, { heading: "", imgUrl: "", dotSize: 36, hotspots: [newHotspot(1)] });
+        else if (type === "hotspot") Object.assign(b, { heading: "", imgUrl: "", dotSize: 20, dotColor: "", dotStyle: "filled", hotspots: [newHotspot(1)] });
         else if (type === "highlight") Object.assign(b, { hlStyle: "tip", label: "", text: "" });
         else if (type === "bullets") Object.assign(b, { heading: "", intro: "", listStyle: "bullet", items: [""] });
         else if (type === "review") Object.assign(b, { verifiedLabel: "", items: [{ name: "", location: "", rating: 5, text: "", verified: true, date: "" }] });
@@ -4567,6 +4567,7 @@
         var b = getBl(id);
         if (b && b.cards.length < 6) {
           b.cards.push(newCard());
+          if (b.cards.length <= 4) b.cols = b.cards.length;
           renderBlocks();
           go();
         } else toast("Max 6 cards", "#5a2020");
@@ -5896,13 +5897,21 @@
                   ea(b.imgUrl) +
                   '" class="hotspot-img-preview" alt="" onerror="this.style.display=\'none\'">'
                 : "") +
-              '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">Pin Size</span><input type="range" min="20" max="70" value="' +
-              (b.dotSize || 36) +
+              '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">Pin Size</span><input type="range" min="10" max="70" value="' +
+              (b.dotSize || 20) +
               '" oninput="onIn(\'' +
               b.id +
               "','dotSize',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px';go()\"><span class=\"rval\">" +
-              (b.dotSize || 36) +
+              (b.dotSize || 20) +
               "px</span></div>" +
+              '<div class="rrow" style="align-items:center;"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">Pin Colour</span><input type="color" value="' +
+              (b.dotColor || "#f97316") +
+              '" oninput="onIn(\'' + b.id + "','dotColor',this.value);go()\" style=\"width:38px;height:32px;padding:2px;border-radius:5px;border:1px solid #e5e5e5;cursor:pointer;\"></div>" +
+              '<div class="trow" style="flex-wrap:wrap;gap:5px;margin-bottom:4px;">' +
+              ["filled","ring","plus","glow","square"].map(function(st){
+                return '<button class="tbtn2' + (b.dotStyle===st?" on":"") + '" onclick="onIn(\'' + b.id + "','dotStyle','" + st + "');renderBlocks();go()\">" + {filled:"● Filled",ring:"○ Ring",plus:"+ Plus",glow:"✦ Glow",square:"■ Square"}[st] + "</button>";
+              }).join("") +
+              "</div>" +
               '<p style="font-size:11px;color:#5a90d0;margin:4px 0 8px;">&#128161; Drag pins directly in the preview to reposition</p>' +
               hlist +
               '<button class="add-mini hs" onclick="addHotspot(\'' +
@@ -6091,6 +6100,9 @@
               b.id +
               "')\">&#8853; Bulk Paste Items</button>";
           } else if (b.type === "review") {
+            if (!b.items && (b.name !== undefined || b.text !== undefined)) {
+              b.items = [{ name: b.name||"", location: b.location||"", rating: b.rating||5, text: b.text||"", verified: !!b.verified, date: b.date||"" }];
+            }
             var rvItems = b.items || [];
             var rvHtml =
               '<div style="margin-bottom:10px;">' +
@@ -6464,13 +6476,13 @@
           Math.min(s.bs, 18) +
           "px);}.simg{height:clamp(160px,50vw,280px);}.pair{grid-template-columns:1fr;gap:8px;}.triple{grid-template-columns:1fr 1fr;gap:8px;}.triple-item:nth-child(3):last-child{grid-column:1/-1;}.triple-item:nth-child(3):last-child img{height:clamp(160px,50vw,260px);max-width:50%;margin:0 auto;display:block;}.pair-item img{height:clamp(160px,50vw,260px);}.triple-item img{height:clamp(130px,40vw,200px);}.section,.shop-block,.faq-block,.table-block,.hotspot-block,.hl-box,.bullets-block{margin-bottom:" +
           Math.round(s.sg * 0.65) +
-          "px;}.btn-filled,.btn-outline{display:block;text-align:center;width:100%;padding:14px 0;}.shop-grid-2{grid-template-columns:repeat(2,1fr);gap:14px;}.shop-grid-3,.shop-grid-4{grid-template-columns:repeat(2,1fr);gap:14px;}.shop-grid-3 .shop-card:nth-child(3):last-child{grid-column:1/-1;max-width:calc(50% - 7px);margin:0 auto;}.shop-card-name{font-size:13px;}.shop-card-price{font-size:13px;}.blog-table th,.blog-table td{padding:9px 12px;font-size:" +
-          (s.bs - 1) +
+          "px;}.btn-filled,.btn-outline{display:block;text-align:center;width:100%;padding:14px 0;}.shop-grid-2{grid-template-columns:repeat(2,1fr);gap:14px;}.shop-grid-3,.shop-grid-4{grid-template-columns:repeat(2,1fr);gap:14px;}.shop-grid-3 .shop-card:nth-child(3):last-child{grid-column:1/-1;max-width:calc(50% - 7px);margin:0 auto;}.shop-card-name{font-size:13px;}.shop-card-price{font-size:13px;}.table-wrap{overflow-x:visible;}.blog-table{table-layout:fixed;word-break:break-word;}.blog-table th,.blog-table td{padding:7px 8px;font-size:" +
+          (s.bs - 2) +
           "px;}.hs-dot{width:28px;height:28px;font-size:11px;}.hl-box{padding:18px 20px;font-size:" +
           (s.bs - 1) +
           "px;}.bullets-list li{font-size:" +
           (s.bs - 1) +
-          "px;}}@media(max-width:480px){.article{padding:20px 14px 50px;}.title{font-size:clamp(22px,8vw,36px);}.hero{height:clamp(160px,52vw,240px);}.sh,.shop-heading,.faq-heading,.table-heading,.hotspot-heading,.bullets-heading{font-size:clamp(16px,5.5vw,26px);}.sb{font-size:14px;line-height:1.75;}.intro{font-size:15px;}.shop-grid-2,.shop-grid-3,.shop-grid-4{grid-template-columns:1fr;gap:16px;}.shop-card-img{aspect-ratio:4/3;}.faq-item summary{font-size:14px;padding:15px 2px;}.hl-box{padding:16px 18px;border-radius:8px;}.review-grid{grid-template-columns:1fr;}.review-block{padding:20px 18px;}}"
+          "px;}}@media(max-width:480px){.article{padding:20px 14px 50px;}.title{font-size:clamp(22px,8vw,36px);}.hero{height:clamp(160px,52vw,240px);}.sh,.shop-heading,.faq-heading,.table-heading,.hotspot-heading,.bullets-heading{font-size:clamp(16px,5.5vw,26px);}.sb{font-size:14px;line-height:1.75;}.intro{font-size:15px;}.shop-grid-2,.shop-grid-3{grid-template-columns:1fr;gap:16px;}.shop-grid-4{grid-template-columns:repeat(2,1fr);gap:10px;}.shop-card-img{height:140px;object-fit:cover;aspect-ratio:unset;}.shop-grid-4 .shop-card-name{font-size:11px;}.shop-grid-4 .shop-card-price{font-size:11px;}.faq-item summary{font-size:14px;padding:15px 2px;}.hl-box{padding:16px 18px;border-radius:8px;}.review-grid{grid-template-columns:1fr;}.review-block{padding:20px 18px;}}"
         );
       }
       function buildBody() {
@@ -6578,7 +6590,8 @@
           } else if (b.type === "shop") {
             h += '<div class="shop-block" data-block-id="' + b.id + '">\n';
             if (b.heading) h += '<h2 class="shop-heading">' + eh(b.heading) + "</h2>\n";
-            h += '<div class="shop-grid-' + (b.cols || 3) + '">\n';
+            var sCols = (b.cols >= b.cards.length) ? b.cols : Math.min(b.cards.length, 4);
+            h += '<div class="shop-grid-' + sCols + '">\n';
             b.cards.forEach(function (card) {
               h +=
                 '<div class="shop-card">\n' +
@@ -6672,20 +6685,38 @@
                 '%;"' +
                 pHref +
                 ' tabindex="0">\n';
-              var ds = b.dotSize || 36;
-              h += '<div class="hs-dot" style="width:' + ds + 'px;height:' + ds + 'px;font-size:' + Math.round(ds * 0.38) + 'px;">' + eh(hs.label) + "</div>\n";
-              h += '<div class="hs-tooltip">\n';
-              if (hs.label) h += '<div class="hs-tooltip-label">' + eh(hs.label) + "</div>\n";
-              if (hs.desc) h += '<div class="hs-tooltip-desc">' + eh(hs.desc) + "</div>\n";
-              if (hs.link) h += '<a href="' + ea(hs.link) + '" class="hs-tooltip-link">Learn more &#8594;</a>\n';
-              if (hs.backLink)
-                h +=
-                  '<a href="' +
-                  ea(hs.backLink) +
-                  '" class="hs-back-link">&#8592; ' +
-                  eh(hs.backLabel || "Back") +
-                  "</a>\n";
-              h += "</div>\n</" + pTag + ">\n";
+              var ds = b.dotSize || 20;
+              var dc = b.dotColor || "#f97316";
+              var dst = b.dotStyle || "filled";
+              var dotStyle = "width:" + ds + "px;height:" + ds + "px;font-size:" + Math.round(ds * 0.38) + "px;";
+              if (dst === "filled") {
+                dotStyle += "background:" + dc + ";color:#fff;border:none;";
+              } else if (dst === "ring") {
+                dotStyle += "background:transparent;border:3px solid " + dc + ";color:" + dc + ";box-shadow:none;";
+              } else if (dst === "plus") {
+                dotStyle += "background:" + dc + ";color:#fff;border:none;border-radius:6px;font-size:" + Math.round(ds * 0.6) + "px;font-weight:300;line-height:1;";
+              } else if (dst === "glow") {
+                dotStyle += "background:" + dc + ";color:#fff;border:none;box-shadow:0 0 0 6px " + dc + "44,0 0 20px " + dc + "88;animation:none;";
+              } else if (dst === "square") {
+                dotStyle += "background:" + dc + ";color:#fff;border:none;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.3);animation:none;";
+              }
+              var dotLabel = dst === "plus" ? "+" : eh(hs.label);
+              h += '<div class="hs-dot" style="' + dotStyle + '">' + dotLabel + "</div>\n";
+              var hasTooltip = hs.label || hs.desc || hs.backLink;
+              if (hasTooltip) {
+                h += '<div class="hs-tooltip">\n';
+                if (hs.label) h += '<div class="hs-tooltip-label">' + eh(hs.label) + "</div>\n";
+                if (hs.desc) h += '<div class="hs-tooltip-desc">' + eh(hs.desc) + "</div>\n";
+                if (hs.backLink)
+                  h +=
+                    '<a href="' +
+                    ea(hs.backLink) +
+                    '" class="hs-back-link">&#8592; ' +
+                    eh(hs.backLabel || "Back") +
+                    "</a>\n";
+                h += "</div>\n";
+              }
+              h += "</" + pTag + ">\n";
             });
             h += "</div>\n</div>\n";
           } else if (b.type === "highlight") {
@@ -6704,6 +6735,10 @@
             });
             h += "</" + tag + ">\n</div>\n";
           } else if (b.type === "review") {
+            /* migrate old format (direct props) to items array */
+            if (!b.items && (b.name !== undefined || b.text !== undefined)) {
+              b.items = [{ name: b.name||"", location: b.location||"", rating: b.rating||5, text: b.text||"", verified: !!b.verified, date: b.date||"" }];
+            }
             var rvs = b.items || [];
             var useGrid = rvs.length > 1;
             if (useGrid) h += '<div class="review-grid" data-block-id="' + b.id + '">\n';
