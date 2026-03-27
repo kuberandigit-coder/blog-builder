@@ -1994,6 +1994,56 @@
         border-color: #5a2020;
         color: #c05050;
       }
+      .te-foot-btn.paste-btn {
+        border-color: #2a6a4a;
+        color: #5ad4a0;
+        margin-left: auto;
+      }
+      /* PASTE TABLE OVERLAY */
+      #tbl-paste-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(5,10,25,0.92);
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+      #tbl-paste-overlay.show { display: flex; }
+      #tbl-paste-panel {
+        background: #0d1b3e;
+        border: 1px solid #2a4070;
+        border-radius: 12px;
+        padding: 24px;
+        width: min(560px, 94vw);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      #tbl-paste-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      #tbl-paste-head h3 { color: #c5d8f5; margin: 0; font-size: 16px; }
+      .tbl-paste-hint { color: #7a9fd4; font-size: 13px; margin: 0; }
+      #tbl-paste-input {
+        background: #091525;
+        border: 1px solid #2a4070;
+        border-radius: 7px;
+        color: #c5d8f5;
+        font-family: monospace;
+        font-size: 13px;
+        padding: 10px 12px;
+        resize: vertical;
+        min-height: 160px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      #tbl-paste-input:focus { border-color: #5a90d0; outline: none; }
+      .tbl-paste-opts { display: flex; gap: 20px; }
+      .tbl-paste-opts label { color: #7a9fd4; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+      .tbl-paste-btns { display: flex; gap: 10px; }
       .te-foot-btn.danger:hover {
         background: #3a1010;
       }
@@ -2018,6 +2068,20 @@
         color: #c5d8f5;
         border-color: #5a90d0;
       }
+      .tbl-reopen-btn {
+        margin-top: 8px;
+        padding: 6px 14px;
+        background: #1a2f5e;
+        border: 1px solid #3a6aaa;
+        border-radius: 5px;
+        color: #7a9fd4;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: "Jost", sans-serif;
+        transition: all 0.15s;
+      }
+      .tbl-reopen-btn:hover { background: #1e3a6e; color: #c5d8f5; }
       .tbl-mini-preview {
         overflow-x: auto;
         margin-top: 4px;
@@ -2908,6 +2972,25 @@
           <button class="te-foot-btn" onclick="tblAddRow()">+ Row</button>
           <button class="te-foot-btn danger" onclick="tblRemoveRow()">&#8722; Row</button>
           <button class="te-foot-btn" id="tbl-header-btn" onclick="tblToggleHeader()">&#10003; Header Row</button>
+          <button class="te-foot-btn paste-btn" onclick="openTblPaste()">&#128203; Paste Table</button>
+        </div>
+      </div>
+    </div>
+    <div id="tbl-paste-overlay">
+      <div id="tbl-paste-panel">
+        <div id="tbl-paste-head">
+          <h3>&#128203; Paste Table Data</h3>
+          <button class="ibtn x" onclick="closeTblPaste()">&#10005;</button>
+        </div>
+        <p class="tbl-paste-hint">Copy from <strong>Excel, Google Sheets, ChatGPT, Claude</strong> or any AI tool and paste below.</p>
+        <textarea id="tbl-paste-input" placeholder="Paste your table here...&#10;&#10;Supports:&#10;• Tab-separated (Excel / Google Sheets)&#10;• Markdown table (| col | col |)&#10;• Comma-separated (CSV)" rows="10"></textarea>
+        <div class="tbl-paste-opts">
+          <label><input type="checkbox" id="tbl-paste-header" checked> First row = header</label>
+          <label><input type="checkbox" id="tbl-paste-replace" checked> Replace existing table</label>
+        </div>
+        <div class="tbl-paste-btns">
+          <button class="te-btn" onclick="applyTblPaste()">&#10003; Apply</button>
+          <button class="te-btn" style="background:#2a3550;" onclick="closeTblPaste()">Cancel</button>
         </div>
       </div>
     </div>
@@ -4177,6 +4260,7 @@
         _scrollToBottom = true;
         renderBlocks();
         go();
+        if (type === "table") openTableEditor(b.id);
       }
       function delBlock(id) {
         blocks = blocks.filter(function (b) {
@@ -4734,6 +4818,95 @@
         _tblEId = null;
         renderBlocks();
         go();
+      }
+      function openTblPaste() {
+        document.getElementById("tbl-paste-input").value = "";
+        document.getElementById("tbl-paste-overlay").classList.add("show");
+        setTimeout(function(){ document.getElementById("tbl-paste-input").focus(); }, 100);
+      }
+      function closeTblPaste() {
+        document.getElementById("tbl-paste-overlay").classList.remove("show");
+      }
+      function parsePasteData(raw) {
+        var lines = raw.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim().split("\n");
+        var rows = [];
+        // Detect markdown table (has | characters)
+        var isMarkdown = lines.some(function(l){ return l.trim().indexOf("|") === 0 || l.trim().indexOf("|") > -1; });
+        if (isMarkdown) {
+          lines.forEach(function(line) {
+            var t = line.trim();
+            // Skip separator rows like |---|---|
+            if (/^\|[\s\-:|]+\|/.test(t)) return;
+            if (t.indexOf("|") === -1) return;
+            // Strip leading/trailing |
+            t = t.replace(/^\|/, "").replace(/\|$/, "");
+            var cells = t.split("|").map(function(c){ return c.trim(); });
+            if (cells.length > 0) rows.push(cells);
+          });
+        } else {
+          // Tab-separated or comma-separated
+          var isTab = lines[0] && lines[0].indexOf("\t") > -1;
+          var sep = isTab ? "\t" : ",";
+          lines.forEach(function(line) {
+            if (!line.trim()) return;
+            var cells;
+            if (sep === ",") {
+              // Handle quoted CSV
+              cells = [];
+              var cur = "", inQ = false;
+              for (var ci = 0; ci < line.length; ci++) {
+                var ch = line[ci];
+                if (ch === '"') { inQ = !inQ; }
+                else if (ch === "," && !inQ) { cells.push(cur.trim()); cur = ""; }
+                else cur += ch;
+              }
+              cells.push(cur.trim());
+            } else {
+              cells = line.split("\t").map(function(c){ return c.trim(); });
+            }
+            rows.push(cells);
+          });
+        }
+        return rows;
+      }
+      function applyTblPaste() {
+        var b = getBl(_tblEId);
+        if (!b) return;
+        var raw = document.getElementById("tbl-paste-input").value;
+        if (!raw.trim()) { toast("Nothing to paste", "#5a2020"); return; }
+        var rows = parsePasteData(raw);
+        if (!rows.length) { toast("Could not parse table data", "#5a2020"); return; }
+        var useHeader = document.getElementById("tbl-paste-header").checked;
+        var doReplace = document.getElementById("tbl-paste-replace").checked;
+        // Normalize: all rows same column count
+        var maxCols = rows.reduce(function(m,r){ return Math.max(m,r.length); }, 0);
+        rows = rows.map(function(r) {
+          while (r.length < maxCols) r.push("");
+          return r;
+        });
+        if (doReplace) {
+          b.data = rows.map(function(r) {
+            return r.map(function(v){ return { v: v, cs: 1, rs: 1 }; });
+          });
+          b.hasHeader = useHeader;
+        } else {
+          // Append rows, expand cols if needed
+          var curCols = b.data[0] ? b.data[0].length : 0;
+          if (maxCols > curCols) {
+            b.data.forEach(function(row){
+              while (row.length < maxCols) row.push({ v: "", cs: 1, rs: 1 });
+            });
+          }
+          rows.forEach(function(r) {
+            var newRow = r.map(function(v){ return { v: v, cs: 1, rs: 1 }; });
+            while (newRow.length < b.data[0].length) newRow.push({ v: "", cs: 1, rs: 1 });
+            b.data.push(newRow);
+          });
+        }
+        closeTblPaste();
+        _renderTblE();
+        go();
+        toast(rows.length + " rows × " + maxCols + " cols pasted ✓", "#1a4e2a");
       }
       function _renderTblE() {
         var b = getBl(_tblEId);
@@ -5623,9 +5796,7 @@
               b.id +
               "','heading',this.value)\">" +
               prevHtml +
-              '<button class="tbl-open-btn" onclick="openTableEditor(\'' +
-              b.id +
-              "')\">&#9998; Open Table Editor &mdash; Edit, Merge &amp; Split Cells</button>";
+              '<button class="tbl-reopen-btn" onclick="openTableEditor(\'' + b.id + "')\">&#9998; Edit Table</button>";
           } else if (b.type === "hotspot") {
             var hlist = '<div class="hotspot-list">';
             b.hotspots.forEach(function (hs, hi) {
