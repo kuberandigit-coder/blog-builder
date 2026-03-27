@@ -1012,10 +1012,10 @@
       textarea,
       select {
         width: 100%;
-        padding: 7px 10px;
+        padding: 9px 12px;
         border: 1px solid #e5e5e5;
         border-radius: 5px;
-        font-size: 12px;
+        font-size: 14px;
         font-family: "Jost", sans-serif;
         outline: none;
         background: #fafaf9;
@@ -1031,7 +1031,8 @@
       }
       textarea {
         resize: vertical;
-        min-height: 58px;
+        min-height: 90px;
+        line-height: 1.6;
       }
       input[type="color"] {
         width: 34px;
@@ -2197,11 +2198,13 @@
       .star-btn.on { color: #22c55e; }
       .star-btn:hover { transform: scale(1.2); }
       .rv-item-editor {
-        border: 1px solid #2a3550;
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 10px;
-        background: #1a2640;
+        border-top: 1px solid #2a3550;
+        padding-top: 10px;
+        margin-bottom: 4px;
+      }
+      .rv-item-editor:first-of-type {
+        border-top: none;
+        padding-top: 0;
       }
       .add-review { border: 2px dashed #e8c06a; color: #a06800; }
       .add-review:hover { background: #fdf6e3; }
@@ -4169,7 +4172,7 @@
         else if (type === "hotspot") Object.assign(b, { heading: "", imgUrl: "", hotspots: [newHotspot(1)] });
         else if (type === "highlight") Object.assign(b, { hlStyle: "tip", label: "", text: "" });
         else if (type === "bullets") Object.assign(b, { heading: "", intro: "", listStyle: "bullet", items: [""] });
-        else if (type === "review") Object.assign(b, { items: [{ name: "", location: "", rating: 5, text: "", verified: true, date: "" }] });
+        else if (type === "review") Object.assign(b, { verifiedLabel: "", items: [{ name: "", location: "", rating: 5, text: "", verified: true, date: "" }] });
         blocks.push(b);
         _scrollToBottom = true;
         renderBlocks();
@@ -5125,16 +5128,11 @@
             '<div class="bhead"><span class="btitle">' +
             title +
             '</span><button class="ibtn" onclick="moveBlock(\'' +
-            b.id +
-            "',-1)\" " +
-            (i === 0 ? "disabled" : "") +
+            b.id + "',-1)\" " + (i === 0 ? "disabled" : "") +
             '>&#8593;</button><button class="ibtn" onclick="moveBlock(\'' +
-            b.id +
-            "',1)\" " +
-            (i === n - 1 ? "disabled" : "") +
+            b.id + "',1)\" " + (i === n - 1 ? "disabled" : "") +
             '>&#8595;</button><button class="ibtn x" onclick="delBlock(\'' +
-            b.id +
-            "')\">&#10005;</button></div>";
+            b.id + "')\">&#10005;</button></div>";
           var body = "";
           if (b.type === "section") {
             var ex = "";
@@ -5899,7 +5897,12 @@
               "')\">&#8853; Bulk Paste Items</button>";
           } else if (b.type === "review") {
             var rvItems = b.items || [];
-            var rvHtml = "";
+            var rvHtml =
+              '<div style="margin-bottom:10px;">' +
+              '<label style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px;">&#10003; Verified Label (applies to all)</label>' +
+              '<input type="text" placeholder="e.g. Verifizierter Kauf" value="' + ea(b.verifiedLabel || "") +
+              '" oninput="onIn(\'' + b.id + "','verifiedLabel',this.value)\">" +
+              "</div>";
             rvItems.forEach(function (rv, ri) {
               var stars = "";
               for (var s2 = 1; s2 <= 5; s2++) {
@@ -5908,10 +5911,12 @@
               }
               rvHtml +=
                 '<div class="rv-item-editor">' +
-                '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
-                '<span style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;">Review ' + (ri + 1) + '</span>' +
-                (rvItems.length > 1 ? '<button class="ibtn x" onclick="delReviewItem(\'' + b.id + "'," + ri + ')">&#10005;</button>' : "") +
-                "</div>" +
+                (rvItems.length > 1
+                  ? '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
+                    '<span style="font-size:11px;color:#888;">Review ' + (ri + 1) + '</span>' +
+                    '<button class="ibtn x" onclick="delReviewItem(\'' + b.id + "'," + ri + ')">&#10005;</button>' +
+                    "</div>"
+                  : "") +
                 '<div class="trow" style="gap:2px;margin-bottom:8px;">' + stars + "</div>" +
                 '<input type="text" placeholder="Reviewer name e.g. Sarah M." value="' + ea(rv.name || "") +
                 '" oninput="onInReview(\'' + b.id + "'," + ri + ",'name',this.value)\">" +
@@ -6515,7 +6520,7 @@
               h += '<div class="review-meta">\n';
               if (rv.name) h += '<span class="review-name">' + eh(rv.name) + "</span>\n";
               if (rv.location) h += '<span class="review-location">&#128205; ' + eh(rv.location) + "</span>\n";
-              if (rv.verified) h += '<span class="review-verified"><span class="rv-badge">&#10003;</span> Verified</span>\n';
+              if (rv.verified) h += '<span class="review-verified"><span class="rv-badge">&#10003;</span> ' + eh(b.verifiedLabel || "Verified") + "</span>\n";
               if (rv.date) h += '<span class="review-date">' + eh(rv.date) + "</span>\n";
               h += "</div>\n</div>\n";
             });
