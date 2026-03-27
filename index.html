@@ -11,7 +11,7 @@
     />
     <link rel="preconnect" href="https://fonts.googleapis.com/" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <style>
@@ -4252,7 +4252,7 @@
         else if (type === "shop") Object.assign(b, { heading: "", cols: 3, cards: [newCard()] });
         else if (type === "faq") Object.assign(b, { heading: "", items: [{ q: "", a: "" }] });
         else if (type === "table") Object.assign(b, { heading: "", hasHeader: true, data: newTableData(3, 3) });
-        else if (type === "hotspot") Object.assign(b, { heading: "", imgUrl: "", hotspots: [newHotspot(1)] });
+        else if (type === "hotspot") Object.assign(b, { heading: "", imgUrl: "", dotSize: 36, hotspots: [newHotspot(1)] });
         else if (type === "highlight") Object.assign(b, { hlStyle: "tip", label: "", text: "" });
         else if (type === "bullets") Object.assign(b, { heading: "", intro: "", listStyle: "bullet", items: [""] });
         else if (type === "review") Object.assign(b, { verifiedLabel: "", items: [{ name: "", location: "", rating: 5, text: "", verified: true, date: "" }] });
@@ -4379,10 +4379,26 @@
         if (b && b.data[r] && b.data[r][c]) b.data[r][c].v = val;
         go();
       }
+      var _goHsTimer = null;
       function onInHotspot(id, hi, key, val) {
         var b = getBl(id);
         if (b && b.hotspots[hi]) {
           b.hotspots[hi][key] = key === "x" || key === "y" ? parseFloat(val) || 0 : val;
+        }
+        if (key === "x" || key === "y") {
+          ["pframe-d","pframe-m"].forEach(function(fid){
+            try {
+              var frame = document.getElementById(fid);
+              if (!frame || !frame.contentDocument) return;
+              var block = frame.contentDocument.querySelector('[data-block-id="'+id+'"]');
+              if (!block) return;
+              var pins = block.querySelectorAll(".hs-pin");
+              if (pins[hi]) pins[hi].style[key==="x"?"left":"top"] = (parseFloat(val)||0)+"%";
+            } catch(e){}
+          });
+          clearTimeout(_goHsTimer);
+          _goHsTimer = setTimeout(go, 600);
+          return;
         }
         go();
       }
@@ -5880,6 +5896,14 @@
                   ea(b.imgUrl) +
                   '" class="hotspot-img-preview" alt="" onerror="this.style.display=\'none\'">'
                 : "") +
+              '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">Pin Size</span><input type="range" min="20" max="70" value="' +
+              (b.dotSize || 36) +
+              '" oninput="onIn(\'' +
+              b.id +
+              "','dotSize',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px';go()\"><span class=\"rval\">" +
+              (b.dotSize || 36) +
+              "px</span></div>" +
+              '<p style="font-size:11px;color:#5a90d0;margin:4px 0 8px;">&#128161; Drag pins directly in the preview to reposition</p>' +
               hlist +
               '<button class="add-mini hs" onclick="addHotspot(\'' +
               b.id +
@@ -6193,7 +6217,7 @@
       }
       function buildCSS(s) {
         return (
-          "img{display:block;max-width:100%;height:auto;}a{color:inherit;text-decoration:none;}.inline-link{color:" +
+          "img{display:block;max-width:100%;height:auto;}a{color:inherit;text-decoration:none;}strong,b{font-weight:700;}.inline-link{color:" +
           s.lnk +
           ";text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px;font-weight:inherit;transition:opacity .15s;}.inline-link:hover{opacity:.72;}.inline-link strong,.inline-link em,.inline-link u,strong .inline-link,em .inline-link,u .inline-link{color:" +
           s.lnk +
@@ -6648,7 +6672,8 @@
                 '%;"' +
                 pHref +
                 ' tabindex="0">\n';
-              h += '<div class="hs-dot">' + eh(hs.label) + "</div>\n";
+              var ds = b.dotSize || 36;
+              h += '<div class="hs-dot" style="width:' + ds + 'px;height:' + ds + 'px;font-size:' + Math.round(ds * 0.38) + 'px;">' + eh(hs.label) + "</div>\n";
               h += '<div class="hs-tooltip">\n';
               if (hs.label) h += '<div class="hs-tooltip-label">' + eh(hs.label) + "</div>\n";
               if (hs.desc) h += '<div class="hs-tooltip-desc">' + eh(hs.desc) + "</div>\n";
@@ -6816,10 +6841,11 @@
           '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#aaa;text-align:center;padding:40px;"><div style="font-size:48px;margin-bottom:16px;">&#9998;</div><p style="font-size:15px;margin-bottom:6px;font-weight:600;">Start building</p><p style="font-size:13px;">Add a title, hero image, or blocks below</p></div>';
         var cs =
           "<scr" +
-          'ipt>(function(){var s=document.createElement("style");s.textContent="[data-block-id]{cursor:pointer;transition:outline .12s;}[data-block-id]:hover{outline:2px dashed rgba(90,144,208,.55);outline-offset:3px;}";document.head.appendChild(s);document.addEventListener("click",function(e){var chk=e.target;while(chk&&chk!==document.body){if(chk.tagName==="SUMMARY")return;chk=chk.parentElement;}var el=e.target;while(el&&el!==document.body){var bid=el.getAttribute("data-block-id");if(bid){e.preventDefault();window.parent.postMessage({type:"block-click",id:bid},"*");return;}el=el.parentElement;}var t=e.target;while(t&&t!==document.body){if(t.tagName==="A"){e.preventDefault();return;}t=t.parentElement;}});})();<\/scr' +
+          'ipt>(function(){var s=document.createElement("style");s.textContent="[data-block-id]{cursor:pointer;transition:outline .12s;}[data-block-id]:hover{outline:2px dashed rgba(90,144,208,.55);outline-offset:3px;}.hs-pin{cursor:grab!important;}.hs-pin:active{cursor:grabbing!important;}";document.head.appendChild(s);document.addEventListener("click",function(e){var chk=e.target;while(chk&&chk!==document.body){if(chk.tagName==="SUMMARY")return;chk=chk.parentElement;}var el=e.target;while(el&&el!==document.body){var bid=el.getAttribute("data-block-id");if(bid){e.preventDefault();window.parent.postMessage({type:"block-click",id:bid},"*");return;}el=el.parentElement;}var t=e.target;while(t&&t!==document.body){if(t.tagName==="A"){e.preventDefault();return;}t=t.parentElement;}});' +
+          'var _hsDrag=false;document.addEventListener("mousedown",function(e){var pin=e.target.closest&&e.target.closest(".hs-pin");if(!pin)return;e.preventDefault();e.stopPropagation();_hsDrag=true;var wrap=pin.closest(".hotspot-wrap");if(!wrap)return;var block=pin.closest("[data-block-id]");var bid=block?block.getAttribute("data-block-id"):null;var pins=Array.from(wrap.querySelectorAll(".hs-pin"));var hIdx=pins.indexOf(pin);function onMove(ev){var rect=wrap.getBoundingClientRect();var x=Math.round(Math.min(100,Math.max(0,((ev.clientX-rect.left)/rect.width)*100)));var y=Math.round(Math.min(100,Math.max(0,((ev.clientY-rect.top)/rect.height)*100)));pin.style.left=x+"%";pin.style.top=y+"%";window.parent.postMessage({type:"hs-drag",bid:bid,hIdx:hIdx,x:x,y:y},"*");}function onUp(){document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);setTimeout(function(){_hsDrag=false;},50);}document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);});})();<\/scr' +
           "ipt>";
         return (
-          '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet"><style>' +
+          '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>' +
           buildCSS(s) +
           "</style>" +
           cs +
@@ -7437,7 +7463,25 @@
         }, 1400);
       }
       window.addEventListener("message", function (e) {
-        if (!e.data || e.data.type !== "block-click") return;
+        if (!e.data) return;
+        if (e.data.type === "hs-drag") {
+          var b = getBl(e.data.bid);
+          if (b && b.hotspots && b.hotspots[e.data.hIdx]) {
+            b.hotspots[e.data.hIdx].x = e.data.x;
+            b.hotspots[e.data.hIdx].y = e.data.y;
+            /* update the number inputs in editor without re-render */
+            var bw = document.querySelector('[data-id="' + e.data.bid + '"]');
+            if (bw) {
+              var xyInputs = bw.querySelectorAll(".hs-xy input[type='number']");
+              if (xyInputs[e.data.hIdx * 2]) xyInputs[e.data.hIdx * 2].value = e.data.x;
+              if (xyInputs[e.data.hIdx * 2 + 1]) xyInputs[e.data.hIdx * 2 + 1].value = e.data.y;
+            }
+            clearTimeout(_goHsTimer);
+            _goHsTimer = setTimeout(go, 600);
+          }
+          return;
+        }
+        if (e.data.type !== "block-click") return;
         var id = e.data.id;
         etab("content");
         var ls = document.getElementById("left-scroll");
