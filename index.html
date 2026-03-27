@@ -9488,70 +9488,16 @@
             applyFmt(taFn(), "underline");
           }),
         );
-        /* color wrap */
+        /* color wrap — same canvas picker as block sections */
         var cw = document.createElement("div");
         cw.className = "fmt-color-wrap";
-        var colorBtn = document.createElement("button");
-        colorBtn.className = "fmt-btn";
-        colorBtn.innerHTML = "A&#9660;";
-        colorBtn.style.cssText =
-          "background:linear-gradient(135deg,#e53e3e,#d69e2e,#38a169,#3182ce,#805ad5);color:#fff;border-color:transparent;";
-        colorBtn.onmousedown = function (e) {
-          e.preventDefault();
-        };
-        /* build popup */
-        var cp = document.createElement("div");
-        cp.className = "fmt-color-popup";
-        cp.id = "fcp-intro";
-        var cpLabel = document.createElement("div");
-        cpLabel.className = "fmt-color-label";
-        cpLabel.textContent = "Text Color";
-        cp.appendChild(cpLabel);
-        var swDiv = document.createElement("div");
-        swDiv.className = "fmt-color-swatches";
-        FMT_COLORS.forEach(function (c) {
-          var sw = document.createElement("div");
-          sw.className = "fmt-color-swatch";
-          sw.style.cssText =
-            "background:" +
-            c +
-            ";width:22px;height:22px;border-radius:4px;cursor:pointer;border:2px solid transparent;display:inline-block;margin:1px;";
-          sw.title = c;
-          sw.onclick = function () {
-            applyColorPopup("fcp-intro", c);
-          };
-          swDiv.appendChild(sw);
-        });
-        cp.appendChild(swDiv);
-        var cpRow = document.createElement("div");
-        cpRow.className = "fmt-color-row";
-        var cpInput = document.createElement("input");
-        cpInput.className = "fmt-color-input";
-        cpInput.type = "text";
-        cpInput.placeholder = "#hex or color";
-        cpInput.id = "fcp-intro-custom";
-        cpInput.maxLength = 20;
-        var cpOk = document.createElement("button");
-        cpOk.className = "fmt-color-ok";
-        cpOk.textContent = "Apply";
-        cpOk.onclick = function () {
-          applyColorPopup("fcp-intro", "");
-        };
-        var cpCancel = document.createElement("button");
-        cpCancel.className = "fmt-color-cancel";
-        cpCancel.textContent = "✕";
-        cpCancel.onclick = function () {
-          closeColorPopup("fcp-intro");
-        };
-        cpRow.appendChild(cpInput);
-        cpRow.appendChild(cpOk);
-        cpRow.appendChild(cpCancel);
-        cp.appendChild(cpRow);
-        colorBtn.onclick = function () {
-          openColorPopup("fcp-intro", taFn());
-        };
-        cw.appendChild(colorBtn);
-        cw.appendChild(cp);
+        cw.innerHTML =
+          '<button class="fmt-btn" onmousedown="event.preventDefault()" style="background:linear-gradient(135deg,#e53e3e,#d69e2e,#38a169,#3182ce,#805ad5);color:#fff;border-color:transparent;" onclick="openColorPopup(\'fcp-intro\',document.getElementById(\'f-intro\'))">A&#9660;</button>' +
+          '<div class="fmt-color-popup" id="fcp-intro">' +
+          '<div class="fmt-color-label">&#127775; Text Color</div>' +
+          '<div class="cpk-wrap"><canvas class="cpk-canvas" width="160" height="120"></canvas><div class="cpk-cursor"></div><div class="cpk-hue-wrap"><canvas class="cpk-hue" width="16" height="120"></canvas><div class="cpk-hue-cursor"></div></div></div>' +
+          '<div class="fmt-color-row"><div class="cpk-preview"></div><input class="fmt-color-input" type="text" placeholder="#hex" maxlength="20"><button class="fmt-color-ok" onclick="applyColorPopup(\'fcp-intro\',\'\')">Apply</button><button class="fmt-color-cancel" onclick="closeColorPopup(\'fcp-intro\')">&#10005;</button></div>' +
+          '</div>';
         row.appendChild(cw);
         wrap.appendChild(row);
       })();
