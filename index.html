@@ -2183,6 +2183,28 @@
       .add-mini.bullet:hover {
         background: #fde8e8;
       }
+      /* ── STAR RATING BUTTONS ── */
+      .star-btn {
+        background: none;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+        color: #d1d5db;
+        padding: 0 1px;
+        transition: color 0.15s, transform 0.1s;
+        line-height: 1;
+      }
+      .star-btn.on { color: #22c55e; }
+      .star-btn:hover { transform: scale(1.2); }
+      .rv-item-editor {
+        border: 1px solid #2a3550;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
+        background: #1a2640;
+      }
+      .add-review { border: 2px dashed #e8c06a; color: #a06800; }
+      .add-review:hover { background: #fdf6e3; }
       /* ── HIGHLIGHT SWATCHES ── */
       .hl-swatch-row {
         display: flex;
@@ -3109,6 +3131,7 @@
               <button class="addbtn add-hotspot" onclick="addBlock('hotspot')">&#127987; Hotspot Image</button>
               <button class="addbtn add-highlight" onclick="addBlock('highlight')">&#128161; Highlight Box</button>
               <button class="addbtn add-bullets" onclick="addBlock('bullets')">&#9679; Bullet List</button>
+              <button class="addbtn add-review" onclick="addBlock('review')">&#11088; Customer Review</button>
             </div>
             <div class="sumbar" id="sumbar" style="display: none">
               <span>&#128221; <strong id="s-s">0</strong></span>
@@ -4146,6 +4169,7 @@
         else if (type === "hotspot") Object.assign(b, { heading: "", imgUrl: "", hotspots: [newHotspot(1)] });
         else if (type === "highlight") Object.assign(b, { hlStyle: "tip", label: "", text: "" });
         else if (type === "bullets") Object.assign(b, { heading: "", intro: "", listStyle: "bullet", items: [""] });
+        else if (type === "review") Object.assign(b, { items: [{ name: "", location: "", rating: 5, text: "", verified: true, date: "" }] });
         blocks.push(b);
         _scrollToBottom = true;
         renderBlocks();
@@ -4210,6 +4234,35 @@
         if (b) b.hlStyle = s;
         renderBlocks();
         go();
+      }
+      function setReviewRating(id, idx, r) {
+        var b = getBl(id);
+        if (b && b.items && b.items[idx]) b.items[idx].rating = r;
+        renderBlocks();
+        go();
+      }
+      function onInReview(id, idx, key, val) {
+        var b = getBl(id);
+        if (b && b.items && b.items[idx]) {
+          b.items[idx][key] = val;
+          updateTitle(id);
+          go();
+        }
+      }
+      function addReviewItem(id) {
+        var b = getBl(id);
+        if (!b) return;
+        b.items.push({ name: "", location: "", rating: 5, text: "", verified: true, date: "" });
+        renderBlocks();
+        go();
+      }
+      function delReviewItem(id, idx) {
+        var b = getBl(id);
+        if (b && b.items && b.items.length > 1) {
+          b.items.splice(idx, 1);
+          renderBlocks();
+          go();
+        }
       }
       function setListStyle(id, s) {
         var b = getBl(id);
@@ -4931,6 +4984,7 @@
         else if (b.type === "hotspot") t.textContent = "Hotspot: " + (b.heading || "Image").slice(0, 18);
         else if (b.type === "highlight") t.textContent = "Box: " + (b.label || "Highlight").slice(0, 22);
         else if (b.type === "bullets") t.textContent = "Bullets: " + (b.heading || "List").slice(0, 20);
+        else if (b.type === "review") t.textContent = "Review: " + ((b.items && b.items[0] && b.items[0].name) || "Customer").slice(0, 22);
       }
       function syncSectionBlocks() {
         blocks.forEach(function (b) {
@@ -5064,7 +5118,9 @@
                         ? "Hotspot: " + (b.heading || "Image").slice(0, 18)
                         : b.type === "highlight"
                           ? "Box: " + (b.label || "Highlight").slice(0, 22)
-                          : "Bullets: " + (b.heading || "List").slice(0, 20);
+                          : b.type === "bullets"
+                            ? "Bullets: " + (b.heading || "List").slice(0, 20)
+                            : "Review: " + ((b.items && b.items[0] && b.items[0].name) || "Customer").slice(0, 22);
           var hd =
             '<div class="bhead"><span class="btitle">' +
             title +
@@ -5841,6 +5897,36 @@
               '<button class="add-mini bullet" style="margin-top:4px;border-color:#c0a0e0;color:#5a2aaa;" onclick="bulkAddBullets(\'' +
               b.id +
               "')\">&#8853; Bulk Paste Items</button>";
+          } else if (b.type === "review") {
+            var rvItems = b.items || [];
+            var rvHtml = "";
+            rvItems.forEach(function (rv, ri) {
+              var stars = "";
+              for (var s2 = 1; s2 <= 5; s2++) {
+                stars += '<button class="star-btn' + (s2 <= (rv.rating || 5) ? " on" : "") +
+                  '" onclick="setReviewRating(\'' + b.id + "'," + ri + "," + s2 + ')">&#9733;</button>';
+              }
+              rvHtml +=
+                '<div class="rv-item-editor">' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
+                '<span style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;">Review ' + (ri + 1) + '</span>' +
+                (rvItems.length > 1 ? '<button class="ibtn x" onclick="delReviewItem(\'' + b.id + "'," + ri + ')">&#10005;</button>' : "") +
+                "</div>" +
+                '<div class="trow" style="gap:2px;margin-bottom:8px;">' + stars + "</div>" +
+                '<input type="text" placeholder="Reviewer name e.g. Sarah M." value="' + ea(rv.name || "") +
+                '" oninput="onInReview(\'' + b.id + "'," + ri + ",'name',this.value)\">" +
+                '<input type="text" placeholder="Location e.g. London, UK (optional)" value="' + ea(rv.location || "") +
+                '" oninput="onInReview(\'' + b.id + "'," + ri + ",'location',this.value)\">" +
+                '<input type="text" placeholder="Date e.g. March 2025 (optional)" value="' + ea(rv.date || "") +
+                '" oninput="onInReview(\'' + b.id + "'," + ri + ",'date',this.value)\">" +
+                '<textarea placeholder="Review text..." rows="3" oninput="onInReview(\'' + b.id + "'," + ri + ",'text',this.value)\">" +
+                eh(rv.text || "") + "</textarea>" +
+                '<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:4px;">' +
+                '<input type="checkbox" ' + (rv.verified ? "checked" : "") + ' onchange="onInReview(\'' + b.id + "'," + ri + ",'verified',this.checked)\">" +
+                " Verified Purchase</label>" +
+                "</div>";
+            });
+            body = rvHtml + '<button class="add-mini bullet" onclick="addReviewItem(\'' + b.id + "')\">+ Add Review</button>";
           }
           w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
           c.appendChild(w);
@@ -6155,6 +6241,18 @@
           s.bdy +
           ";}.bullets-list.style-number{list-style:decimal;padding-left:22px;}.bullets-list.style-number li{display:list-item;padding-left:6px;}" +
           ".bullets-list.style-bullet li>span,.bullets-list.style-check li>span{flex:1;min-width:0;}" +
+          /* REVIEW */
+          ".review-grid{display:grid;grid-template-columns:1fr 1fr;gap:" + Math.round(s.sg * 0.6) + "px;margin-bottom:" + s.sg + "px;}" +
+          ".review-grid .review-block{margin-bottom:0;}" +
+          ".review-block{margin-bottom:" + s.sg + "px;background:#fff;border:1px solid #e8e8e8;border-radius:14px;padding:28px 32px;box-shadow:0 2px 12px rgba(0,0,0,.06);}" +
+          ".review-stars{font-size:17px;margin-bottom:14px;letter-spacing:1px;color:#22c55e;}" +
+          ".review-text{font-size:" + s.bs + "px;line-height:" + s.lh + ";color:" + s.bdy + ";font-style:italic;margin:0 0 18px;}" +
+          ".review-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;}" +
+          ".review-name{font-weight:700;color:" + s.hdg + ";font-size:" + (s.bs - 1) + "px;}" +
+          ".review-location{color:#888;font-size:" + (s.bs - 2) + "px;}" +
+          ".review-verified{display:inline-flex;align-items:center;gap:5px;font-size:" + (s.bs - 2) + "px;font-weight:600;color:#1d9bf0;}" +
+          ".rv-badge{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#1d9bf0;color:#fff;font-size:10px;font-weight:700;flex-shrink:0;}" +
+          ".review-date{color:#aaa;font-size:" + (s.bs - 2) + "px;margin-left:auto;}" +
           /* RESPONSIVE */
           "@media(max-width:768px){.article{padding:28px 18px 60px;}.title{font-size:clamp(26px,7vw," +
           Math.min(s.ts, 48) +
@@ -6172,7 +6270,7 @@
           (s.bs - 1) +
           "px;}.bullets-list li{font-size:" +
           (s.bs - 1) +
-          "px;}}@media(max-width:480px){.article{padding:20px 14px 50px;}.title{font-size:clamp(22px,8vw,36px);}.hero{height:clamp(160px,52vw,240px);}.sh,.shop-heading,.faq-heading,.table-heading,.hotspot-heading,.bullets-heading{font-size:clamp(16px,5.5vw,26px);}.sb{font-size:14px;line-height:1.75;}.intro{font-size:15px;}.shop-grid-2,.shop-grid-3,.shop-grid-4{grid-template-columns:1fr;gap:16px;}.shop-card-img{aspect-ratio:4/3;}.faq-item summary{font-size:14px;padding:15px 2px;}.hl-box{padding:16px 18px;border-radius:8px;}}"
+          "px;}}@media(max-width:480px){.article{padding:20px 14px 50px;}.title{font-size:clamp(22px,8vw,36px);}.hero{height:clamp(160px,52vw,240px);}.sh,.shop-heading,.faq-heading,.table-heading,.hotspot-heading,.bullets-heading{font-size:clamp(16px,5.5vw,26px);}.sb{font-size:14px;line-height:1.75;}.intro{font-size:15px;}.shop-grid-2,.shop-grid-3,.shop-grid-4{grid-template-columns:1fr;gap:16px;}.shop-card-img{aspect-ratio:4/3;}.faq-item summary{font-size:14px;padding:15px 2px;}.hl-box{padding:16px 18px;border-radius:8px;}.review-grid{grid-template-columns:1fr;}.review-block{padding:20px 18px;}}"
         );
       }
       function buildBody() {
@@ -6190,7 +6288,7 @@
             : '<div class="hero-wrap" data-block-id="__details">' + hi + "</div>\n";
         }
         if (intro) h += '<p class="intro" data-block-id="__details">' + parseLinks(intro) + "</p>\n";
-        blocks.forEach(function (b) {
+        blocks.forEach(function (b, _ri) {
           if (b.type === "section") {
             h += '<div class="section" data-block-id="' + b.id + '">\n';
             if (b.heading) h += '<h2 class="sh">' + parseContent(b.heading) + "</h2>\n";
@@ -6404,6 +6502,24 @@
               if (item && item.trim()) h += "<li><span>" + parseLinks(item) + "</span></li>\n";
             });
             h += "</" + tag + ">\n</div>\n";
+          } else if (b.type === "review") {
+            var rvs = b.items || [];
+            var useGrid = rvs.length > 1;
+            if (useGrid) h += '<div class="review-grid" data-block-id="' + b.id + '">\n';
+            rvs.forEach(function (rv) {
+              var stars = "";
+              for (var si = 0; si < (rv.rating || 5); si++) stars += "&#9733;";
+              h += '<div class="review-block"' + (!useGrid ? ' data-block-id="' + b.id + '"' : "") + '>\n';
+              h += '<div class="review-stars">' + stars + "</div>\n";
+              if (rv.text) h += '<p class="review-text">\u201c' + eh(rv.text) + '\u201d</p>\n';
+              h += '<div class="review-meta">\n';
+              if (rv.name) h += '<span class="review-name">' + eh(rv.name) + "</span>\n";
+              if (rv.location) h += '<span class="review-location">&#128205; ' + eh(rv.location) + "</span>\n";
+              if (rv.verified) h += '<span class="review-verified"><span class="rv-badge">&#10003;</span> Verified</span>\n';
+              if (rv.date) h += '<span class="review-date">' + eh(rv.date) + "</span>\n";
+              h += "</div>\n</div>\n";
+            });
+            if (useGrid) h += "</div>\n";
           }
         });
         return h;
