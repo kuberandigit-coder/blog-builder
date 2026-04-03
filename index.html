@@ -4416,6 +4416,34 @@
         if (b && b.items) b.items[fi] = val;
         go();
       }
+
+      function isoToSymbol(iso) {
+  var map = {
+    "GBP": "£", "USD": "$", "EUR": "€", "CAD": "CA$",
+    "AUD": "A$", "NZD": "NZ$", "CHF": "CHF ", "SEK": "kr",
+    "NOK": "kr", "DKK": "kr", "JPY": "¥", "CNY": "¥",
+    "INR": "₹", "BRL": "R$", "MXN": "MX$", "SGD": "S$",
+    "HKD": "HK$", "ZAR": "R", "AED": "AED "
+  };
+  return map[(iso || "").toUpperCase()] || iso || "€";
+}
+
+function priceHasSymbol(str) {
+  return /^[£$€¥₹R]|^[A-Z]{2,4}\s/.test((str || "").trim());
+}
+
+function getCurrencyFromUrl(url) {
+  try {
+    var host = new URL(url).hostname.toLowerCase();
+    if (/\.co\.uk$|\.uk$/.test(host)) return "£";
+    if (/\.de$|\.at$|\.fr$|\.es$|\.it$|\.nl$|\.be$|\.eu$/.test(host)) return "€";
+    if (/\.com$|\.us$/.test(host)) return "$";
+    if (/\.ca$/.test(host)) return "CA$";
+    if (/\.au$/.test(host)) return "A$";
+  } catch(e) {}
+  return "€";
+}
+
       function refetchCard(id, ci) {
         var b = getBl(id);
         if (!b) return;
@@ -4462,11 +4490,13 @@
             if (p.images && p.images[0]) b2.cards[ci].img = p.images[0].src;
             var price = p.variants && p.variants[0] ? p.variants[0].price : "";
             var comparePrice = p.variants && p.variants[0] ? p.variants[0].compare_at_price : "";
-            if (price) b2.cards[ci].price = "€" + parseFloat(price).toFixed(2);
-            if (comparePrice && parseFloat(comparePrice) > parseFloat(price)) {
-              var pct = Math.round((1 - parseFloat(price) / parseFloat(comparePrice)) * 100);
+var sym = getCurrencyFromUrl(url);
+            var priceNum = parseFloat(price);
+            if (price) b2.cards[ci].price = sym + priceNum.toFixed(2);
+            if (comparePrice && parseFloat(comparePrice) > priceNum) {
+              var pct = Math.round((1 - priceNum / parseFloat(comparePrice)) * 100);
               b2.cards[ci].discount = pct + "% OFF";
-              b2.cards[ci].comparePrice = "€" + parseFloat(comparePrice).toFixed(2);
+              b2.cards[ci].comparePrice = sym + parseFloat(comparePrice).toFixed(2);
             }
             b2.cards[ci].btnLink = url;
             renderBlocks();
@@ -4508,8 +4538,12 @@
                     .replace(/\s*~\d+$/, "")
                     .slice(0, 80);
                 if (gm("og:image")) b2.cards[ci].img = gm("og:image");
-                if (gm("product:price:amount"))
-                  b2.cards[ci].price = (gm("product:price:currency") || "€") + " " + gm("product:price:amount");
+if (gm("product:price:amount")) {
+                  var rawAmt = gm("product:price:amount");
+                  var rawCur = gm("product:price:currency");
+                  var symFallback = rawCur ? isoToSymbol(rawCur) : getCurrencyFromUrl(url);
+                  b2.cards[ci].price = priceHasSymbol(rawAmt) ? rawAmt : symFallback + parseFloat(rawAmt).toFixed(2);
+                }
                 b2.cards[ci].btnLink = url;
                 renderBlocks();
                 go();
@@ -6508,7 +6542,7 @@
           (s.bs - 1) +
           "px;}.bullets-list li{font-size:" +
           (s.bs - 1) +
-          "px;}}@media(max-width:480px){.article{padding:20px 14px 50px;}.title{font-size:clamp(22px,8vw,36px);}.hero{height:clamp(160px,52vw,240px);}.sh,.shop-heading,.faq-heading,.table-heading,.hotspot-heading,.bullets-heading{font-size:clamp(16px,5.5vw,26px);}.sb{font-size:14px;line-height:1.75;}.intro{font-size:15px;}.shop-grid-2,.shop-grid-3{grid-template-columns:1fr;gap:16px;}.shop-grid-4{grid-template-columns:repeat(2,1fr);gap:10px;}.shop-card-img{height:140px;object-fit:cover;aspect-ratio:unset;}.shop-grid-4 .shop-card-name{font-size:11px;}.shop-grid-4 .shop-card-price{font-size:11px;}.faq-item summary{font-size:14px;padding:15px 2px;}.hl-box{padding:16px 18px;border-radius:8px;}.review-grid{grid-template-columns:1fr;}.review-block{padding:20px 18px;}}"
+          "px;}}@media(max-width:480px){.article{padding:20px 14px 50px;}.title{font-size:clamp(22px,8vw,36px);}.hero{height:clamp(160px,52vw,240px);}.sh,.shop-heading,.faq-heading,.table-heading,.hotspot-heading,.bullets-heading{font-size:clamp(16px,5.5vw,26px);}.sb{font-size:14px;line-height:1.75;}.intro{font-size:15px;}.shop-grid-2{grid-template-columns:1fr;gap:16px;}.shop-grid-3{grid-template-columns:repeat(2,1fr);gap:14px;}.shop-grid-4{grid-template-columns:repeat(2,1fr);gap:10px;}.shop-card-img{height:140px;object-fit:cover;aspect-ratio:unset;}.shop-grid-4 .shop-card-name{font-size:11px;}.shop-grid-4 .shop-card-price{font-size:11px;}.faq-item summary{font-size:14px;padding:15px 2px;}.hl-box{padding:16px 18px;border-radius:8px;}.review-grid{grid-template-columns:1fr;}.review-block{padding:20px 18px;}}"
         );
       }
       function buildBody() {
@@ -6616,7 +6650,7 @@
           } else if (b.type === "shop") {
             h += '<div class="shop-block" data-block-id="' + b.id + '">\n';
             if (b.heading) h += '<h2 class="shop-heading">' + eh(b.heading) + "</h2>\n";
-            var sCols = (b.cols >= b.cards.length) ? b.cols : Math.min(b.cards.length, 4);
+            var sCols = b.cards.length === 6 ? 3 : b.cards.length === 4 ? 4 : b.cols || 3;
             h += '<div class="shop-grid-' + sCols + '">\n';
             b.cards.forEach(function (card) {
               h +=
