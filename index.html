@@ -22,7 +22,7 @@
   position: relative; opacity: 0; transition: opacity 0.18s;
   margin: 0; z-index: 10;
 }
-#blist:hover .insert-row { opacity: 1; }
+.insert-row { opacity: 1; }
 #blist.menu-open .insert-row:not(.open) { opacity: 0 !important; pointer-events: none; }
 .insert-line { flex: 1; height: 1px; background: #d0d8e8; }
 .insert-btn {
@@ -4358,6 +4358,9 @@ _insertMenuOpen = idx;
   var menu = document.createElement('div');
   menu.className = 'insert-menu';
   menu.id = 'insert-menu-popup';
+  var closeBtn = document.createElement('div');
+closeBtn.style.cssText = 'grid-column:1/-1;display:flex;justify-content:center;padding:2px 0 0;';
+closeBtn.innerHTML = '<button style="padding:5px 20px;background:#f0f0f0;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;color:#888;font-family:Jost,sans-serif;letter-spacing:.06em;" onmousedown="event.preventDefault();event.stopPropagation();" onclick="closeInsertMenu()">✕ Close</button>';
   [
     { type:'section',  icon:'📝', label:'Section'   },
     { type:'cta',      icon:'🔗', label:'CTA'        },
@@ -4380,6 +4383,7 @@ el.onmousedown = function(e) {
     };
     menu.appendChild(el);
   });
+  menu.appendChild(closeBtn);
   btn.parentElement.appendChild(menu);
 }
 
@@ -4387,9 +4391,9 @@ function closeInsertMenu() {
   var m = document.getElementById('insert-menu-popup');
   if (m) m.remove();
   document.querySelectorAll('.insert-row.open').forEach(function(r){ r.classList.remove('open'); });
-  _insertMe_insertMenuOpen = -1;
+  _insertMenuOpen = -1;
   var bl = document.getElementById('blist'); if (bl) bl.classList.remove('menu-open');
-}nuOpen = -1;
+}
 
 
       function getBl(id) {
@@ -7663,8 +7667,9 @@ w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
           el.classList.remove("flash-highlight");
         }, 1400);
       }
-      window.addEventListener("message", function (e) {
+window.addEventListener("message", function (e) {
         if (!e.data) return;
+        if (_insertMenuOpen >= 0) closeInsertMenu();
         if (e.data.type === "hs-drag") {
           var b = getBl(e.data.bid);
           if (b && b.hotspots && b.hotspots[e.data.hIdx]) {
