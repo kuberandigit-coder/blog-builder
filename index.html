@@ -15,6 +15,50 @@
       rel="stylesheet"
     />
     <style>
+
+ /* ── INSERT BETWEEN BLOCKS ── */
+.insert-row {
+  display: flex; align-items: center; height: 16px;
+  position: relative; opacity: 0; transition: opacity 0.18s;
+  margin: 0; z-index: 10;
+}
+#blist:hover .insert-row { opacity: 1; }
+#blist.menu-open .insert-row:not(.open) { opacity: 0 !important; pointer-events: none; }
+.insert-line { flex: 1; height: 1px; background: #d0d8e8; }
+.insert-btn {
+  width: 20px; height: 20px; background: #fff;
+  border: 1.5px solid #b0bdd4; border-radius: 50%;
+  color: #6a8ab8; font-size: 14px; font-weight: 400;
+  line-height: 1; cursor: pointer; display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0; transition: all 0.15s;
+  font-family: 'Jost', sans-serif; padding: 0; margin: 0 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.insert-btn:hover {
+  background: #1e4080; border-color: #1e4080;
+  color: #fff; box-shadow: 0 2px 8px rgba(30,64,128,0.25);
+}
+.insert-row.open .insert-btn {
+  background: #1e4080; border-color: #1e4080; color: #fff;
+}
+.insert-menu {
+  position: absolute; top: calc(100% + 6px); left: 50%;
+  transform: translateX(-50%); background: #fff;
+  border: 1px solid #dde3ee; border-radius: 10px; padding: 6px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12); z-index: 9999;
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; min-width: 260px;
+}
+.insert-menu-item {
+  padding: 9px 6px; background: #f8f9fc;
+  border: 1px solid #eaecf4; border-radius: 7px;
+  cursor: pointer; font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: #4a6090; font-family: 'Jost', sans-serif;
+  transition: all 0.12s; text-align: center; line-height: 1.7;
+}
+.insert-menu-item:hover {
+  background: #1e4080; color: #fff; border-color: #1e4080;
+}
+
       *,
       *::before,
       *::after {
@@ -4232,7 +4276,7 @@
         };
       }
 
-      function addBlock(type) {
+      function addBlock(type, insertAt) {
         var b = { id: uid(), type: type };
         if (type === "section")
           Object.assign(b, {
@@ -4265,9 +4309,13 @@
         else if (type === "highlight") Object.assign(b, { hlStyle: "tip", label: "", text: "", hlBorderColor: "#f97316" });
         else if (type === "bullets") Object.assign(b, { heading: "", intro: "", listStyle: "bullet", items: [""] });
         else if (type === "review") Object.assign(b, { verifiedLabel: "", items: [{ name: "", location: "", rating: 5, text: "", verified: true, date: "" }] });
-        blocks.push(b);
-        _scrollToBottom = true;
-        renderBlocks();
+if (insertAt !== undefined && insertAt >= 0 && insertAt <= blocks.length) {
+  blocks.splice(insertAt, 0, b);
+} else {
+  blocks.push(b);
+  _scrollToBottom = true;
+}
+renderBlocks();
         go();
         if (type === "table") openTableEditor(b.id);
       }
@@ -4290,6 +4338,60 @@
         renderBlocks();
         go();
       }
+
+      function makeInsertRow(idx) {
+  var row = document.createElement('div');
+  row.className = 'insert-row';
+  row.innerHTML =
+    '<div class="insert-line"></div>' +
+    '<button class="insert-btn" onclick="showInsertMenu(' + idx + ',this)">+</button>' +
+    '<div class="insert-line"></div>';
+  return row;
+}
+
+var _insertMenuOpen = -1;
+function showInsertMenu(idx, btn) {
+  closeInsertMenu();
+_insertMenuOpen = idx;
+  document.getElementById('blist').classList.add('menu-open');
+  btn.closest('.insert-row').classList.add('open');
+  var menu = document.createElement('div');
+  menu.className = 'insert-menu';
+  menu.id = 'insert-menu-popup';
+  [
+    { type:'section',  icon:'📝', label:'Section'   },
+    { type:'cta',      icon:'🔗', label:'CTA'        },
+    { type:'shop',     icon:'🛍', label:'Shop Cards' },
+    { type:'faq',      icon:'❓', label:'FAQ'        },
+    { type:'table',    icon:'📊', label:'Table'      },
+    { type:'hotspot',  icon:'🏳', label:'Hotspot'    },
+    { type:'highlight',icon:'💡', label:'Highlight'  },
+    { type:'bullets',  icon:'●',  label:'Bullets'    },
+    { type:'review',   icon:'⭐', label:'Review'     }
+  ].forEach(function(item) {
+    var el = document.createElement('div');
+    el.className = 'insert-menu-item';
+    el.innerHTML = item.icon + '<br>' + item.label;
+el.onmousedown = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      addBlock(item.type, idx);
+      closeInsertMenu();
+    };
+    menu.appendChild(el);
+  });
+  btn.parentElement.appendChild(menu);
+}
+
+function closeInsertMenu() {
+  var m = document.getElementById('insert-menu-popup');
+  if (m) m.remove();
+  document.querySelectorAll('.insert-row.open').forEach(function(r){ r.classList.remove('open'); });
+  _insertMe_insertMenuOpen = -1;
+  var bl = document.getElementById('blist'); if (bl) bl.classList.remove('menu-open');
+}nuOpen = -1;
+
+
       function getBl(id) {
         return blocks.find(function (b) {
           return b.id === id;
@@ -5336,6 +5438,7 @@ if (gm("product:price:amount")) {
       function renderBlocks() {
         var c = document.getElementById("blist");
         c.innerHTML = "";
+        if (blocks.length > 0) c.appendChild(makeInsertRow(0));
         var n = blocks.length;
         blocks.forEach(function (b, i) {
           var w = document.createElement("div");
@@ -6197,8 +6300,9 @@ if (gm("product:price:amount")) {
             });
             body = rvHtml + '<button class="add-mini bullet" onclick="addReviewItem(\'' + b.id + "')\">+ Add Review</button>";
           }
-          w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
+w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
           c.appendChild(w);
+          c.appendChild(makeInsertRow(i + 1));
         });
         var sn = blocks.filter(function (b) {
             return b.type === "section";
@@ -8137,7 +8241,13 @@ if (gm("product:price:amount")) {
         var msg = "Link added" + (isBold ? " (bold)" : "") + (isItalic ? " (italic)" : "");
         toast(msg, "#1a4e2a");
       }
-      document.addEventListener("click", function (e) {
+document.addEventListener("click", function (e) {
+        if (_insertMenuOpen >= 0) {
+          var mp = document.getElementById('insert-menu-popup');
+          if (mp && !mp.contains(e.target) && !e.target.classList.contains('insert-btn')) {
+            closeInsertMenu();
+          }
+        }
         if (_lpPopupId) {
           var popup = document.getElementById(_lpPopupId);
           if (popup && !popup.contains(e.target) && !e.target.classList.contains("link-btn"))
