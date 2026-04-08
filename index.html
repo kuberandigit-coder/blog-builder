@@ -6667,7 +6667,14 @@ w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
             ? '<a href="' + ea(heroLink) + '" class="hero-wrap" data-block-id="__details">' + hi + "</a>\n"
             : '<div class="hero-wrap" data-block-id="__details">' + hi + "</div>\n";
         }
-        if (intro) h += '<p class="intro" data-block-id="__details">' + parseLinks(intro) + "</p>\n";
+        if (intro) {
+  var introLines = intro.split("\n").filter(function(l){ return l.trim(); });
+  if (introLines.length > 1) {
+    h += '<div class="intro" data-block-id="__details">' + introLines.map(function(l){ return '<p>' + parseLinks(l) + '</p>'; }).join('\n') + "</div>\n";
+  } else {
+    h += '<p class="intro" data-block-id="__details">' + parseLinks(intro) + "</p>\n";
+  }
+}
         blocks.forEach(function (b, _ri) {
           if (b.type === "section") {
             h += '<div class="section" data-block-id="' + b.id + '">\n';
@@ -9757,6 +9764,23 @@ document.addEventListener("click", function (e) {
         row.appendChild(cw);
         wrap.appendChild(row);
       })();
+
+      // Enter key → next field in block editors (single-line inputs only)
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  var t = e.target, type = (t.type||'').toLowerCase();
+  if (t.tagName !== 'INPUT' || ['submit','button','checkbox','radio','color','range'].includes(type)) return;
+  // Don't interfere with template name input (has its own Enter handler)
+  if (t.id === 'tpl-name-input' || t.id === 'save-tpl-name') return;
+  e.preventDefault();
+  var scope = t.closest('.bbody, .card, #details-card') || document;
+  var all = Array.from(scope.querySelectorAll(
+    'input:not([disabled]):not([type=submit]):not([type=button]):not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]), textarea:not([disabled]), select:not([disabled])'
+  )).filter(el => el.offsetParent !== null);
+  var i = all.indexOf(t);
+  if (i > -1 && i < all.length - 1) all[i + 1].focus();
+});
+
     </script>
   </body>
 </html>
