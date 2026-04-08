@@ -6903,7 +6903,14 @@ w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
           } else if (b.type === "bullets") {
             h += '<div class="bullets-block" data-block-id="' + b.id + '">\n';
             if (b.heading) h += '<h2 class="bullets-heading">' + eh(b.heading) + "</h2>\n";
-            if (b.intro) h += '<p class="bullets-intro">' + parseLinks(b.intro) + "</p>\n";
+            if (b.intro) {
+  var bIntroLines = b.intro.split("\n").filter(function(l){ return l.trim(); });
+  if (bIntroLines.length > 1) {
+    h += '<div class="bullets-intro">' + bIntroLines.map(function(l){ return '<p>' + parseLinks(l) + '</p>'; }).join('\n') + "</div>\n";
+  } else {
+    h += '<p class="bullets-intro">' + parseLinks(b.intro) + "</p>\n";
+  }
+}
             var ls = b.listStyle || "bullet";
             var tag = ls === "number" ? "ol" : "ul";
             h += "<" + tag + ' class="bullets-list style-' + ls + '">\n';
