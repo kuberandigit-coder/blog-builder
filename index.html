@@ -2316,6 +2316,8 @@
       }
       .add-review { border: 2px dashed #e8c06a; color: #a06800; }
       .add-review:hover { background: #fdf6e3; }
+      .add-imageonly { border: 2px dashed #a8d4a8; color: #2a6e2a; }
+      .add-imageonly:hover { background: #eaf5ea; }
       /* ── HIGHLIGHT SWATCHES ── */
       .hl-swatch-row {
         display: flex;
@@ -3271,6 +3273,7 @@
               <button class="addbtn add-highlight" onclick="addBlock('highlight')">&#128161; Highlight Box</button>
               <button class="addbtn add-bullets" onclick="addBlock('bullets')">&#9679; Bullet List</button>
               <button class="addbtn add-review" onclick="addBlock('review')">&#11088; Customer Review</button>
+              <button class="addbtn add-imageonly" onclick="addBlock('imageonly')">🖼 Image </button>
             </div>
             <div class="sumbar" id="sumbar" style="display: none">
               <span>&#128221; <strong id="s-s">0</strong></span>
@@ -4309,6 +4312,16 @@
         else if (type === "highlight") Object.assign(b, { hlStyle: "tip", label: "", text: "", hlBorderColor: "#f97316" });
         else if (type === "bullets") Object.assign(b, { heading: "", intro: "", listStyle: "bullet", items: [""] });
         else if (type === "review") Object.assign(b, { verifiedLabel: "", items: [{ name: "", location: "", rating: 5, text: "", verified: true, date: "" }] });
+        else if (type === "imageonly") Object.assign(b, {
+  imageType: "single",
+  imgUrl: "", imgLink: "",
+  imgL: "", imgLLink: "",
+  imgM: "", imgMLink: "",
+  imgR: "", imgRLink: "",
+  caption: "",
+  imgW: 100, imgH: 400, pairH: 280, tripleH: 220,
+  imgHM: 200, pairHM: 160, tripleHM: 140
+});
 if (insertAt !== undefined && insertAt >= 0 && insertAt <= blocks.length) {
   blocks.splice(insertAt, 0, b);
 } else {
@@ -6263,6 +6276,44 @@ if (gm("product:price:amount")) {
               '<button class="add-mini bullet" style="margin-top:4px;border-color:#c0a0e0;color:#5a2aaa;" onclick="bulkAddBullets(\'' +
               b.id +
               "')\">&#8853; Bulk Paste Items</button>";
+
+              } else if (b.type === "imageonly") {
+  var ex = "";
+  if (b.imageType === "single")
+    ex =
+      '<input type="url" class="fi" placeholder="Image URL" value="' + ea(b.imgUrl) + '" oninput="onIn(\'' + b.id + "','imgUrl',this.value)\">" +
+      '<div class="img-link-row"><span class="img-link-label">Image link &#8594;</span><input type="url" class="fi-lnk" placeholder="Click link (optional)" value="' + ea(b.imgLink) + '" oninput="onIn(\'' + b.id + "','imgLink',this.value)\"></div>" +
+      '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">Width %</span><input type="range" min="10" max="100" value="' + (b.imgW||100) + '" oninput="onIn(\'' + b.id + "','imgW',parseInt(this.value));this.nextElementSibling.textContent=this.value+'%'\"><span class=\"rval\">" + (b.imgW||100) + "%</span></div>" +
+      '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">🖥 Desktop H</span><input type="range" min="80" max="900" step="10" value="' + (b.imgH||400) + '" oninput="onIn(\'' + b.id + "','imgH',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px'\"><span class=\"rval\">" + (b.imgH||400) + "px</span></div>" +
+      '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">📱 Mobile H</span><input type="range" min="60" max="500" step="10" value="' + (b.imgHM||200) + '" oninput="onIn(\'' + b.id + "','imgHM',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px'\"><span class=\"rval\">" + (b.imgHM||200) + "px</span></div>" +
+      '<input type="text" class="fc" placeholder="Caption (optional)" value="' + ea(b.caption) + '" oninput="onIn(\'' + b.id + "','caption',this.value)\">";
+  else if (b.imageType === "pair")
+    ex =
+      '<input type="url" class="fl" placeholder="Left image URL" value="' + ea(b.imgL) + '" oninput="onIn(\'' + b.id + "','imgL',this.value)\">" +
+      '<div class="img-link-row"><span class="img-link-label">Left link &#8594;</span><input type="url" class="fl-lnk" placeholder="Click link" value="' + ea(b.imgLLink) + '" oninput="onIn(\'' + b.id + "','imgLLink',this.value)\"></div>" +
+      '<input type="url" class="fr" placeholder="Right image URL" value="' + ea(b.imgR) + '" oninput="onIn(\'' + b.id + "','imgR',this.value)\">" +
+      '<div class="img-link-row"><span class="img-link-label">Right link &#8594;</span><input type="url" class="fr-lnk" placeholder="Click link" value="' + ea(b.imgRLink) + '" oninput="onIn(\'' + b.id + "','imgRLink',this.value)\"></div>" +
+      '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">🖥 Desktop H</span><input type="range" min="80" max="700" step="10" value="' + (b.pairH||280) + '" oninput="onIn(\'' + b.id + "','pairH',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px'\"><span class=\"rval\">" + (b.pairH||280) + "px</span></div>" +
+      '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">📱 Mobile H</span><input type="range" min="60" max="400" step="10" value="' + (b.pairHM||160) + '" oninput="onIn(\'' + b.id + "','pairHM',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px'\"><span class=\"rval\">" + (b.pairHM||160) + "px</span></div>" +
+      '<input type="text" class="fc" placeholder="Caption (optional)" value="' + ea(b.caption) + '" oninput="onIn(\'' + b.id + "','caption',this.value)\">";
+  else if (b.imageType === "triple")
+    ex =
+      '<input type="url" class="fl" placeholder="Left image URL" value="' + ea(b.imgL) + '" oninput="onIn(\'' + b.id + "','imgL',this.value)\">" +
+      '<div class="img-link-row"><span class="img-link-label">Left link &#8594;</span><input type="url" class="fl-lnk" placeholder="Click link" value="' + ea(b.imgLLink) + '" oninput="onIn(\'' + b.id + "','imgLLink',this.value)\"></div>" +
+      '<input type="url" class="fm" placeholder="Middle image URL" value="' + ea(b.imgM||"") + '" oninput="onIn(\'' + b.id + "','imgM',this.value)\">" +
+      '<div class="img-link-row"><span class="img-link-label">Middle link &#8594;</span><input type="url" class="fm-lnk" placeholder="Click link" value="' + ea(b.imgMLink||"") + '" oninput="onIn(\'' + b.id + "','imgMLink',this.value)\"></div>" +
+      '<input type="url" class="fr" placeholder="Right image URL" value="' + ea(b.imgR) + '" oninput="onIn(\'' + b.id + "','imgR',this.value)\">" +
+      '<div class="img-link-row"><span class="img-link-label">Right link &#8594;</span><input type="url" class="fr-lnk" placeholder="Click link" value="' + ea(b.imgRLink) + '" oninput="onIn(\'' + b.id + "','imgRLink',this.value)\"></div>" +
+      '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">🖥 Desktop H</span><input type="range" min="80" max="600" step="10" value="' + (b.tripleH||220) + '" oninput="onIn(\'' + b.id + "','tripleH',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px'\"><span class=\"rval\">" + (b.tripleH||220) + "px</span></div>" +
+      '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">📱 Mobile H</span><input type="range" min="60" max="350" step="10" value="' + (b.tripleHM||140) + '" oninput="onIn(\'' + b.id + "','tripleHM',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px'\"><span class=\"rval\">" + (b.tripleHM||140) + "px</span></div>" +
+      '<input type="text" class="fc" placeholder="Caption (optional)" value="' + ea(b.caption) + '" oninput="onIn(\'' + b.id + "','caption',this.value)\">";
+  body =
+    '<div class="trow">' +
+    '<button class="tbtn2' + (b.imageType==="single"?" on":"") + '" onclick="setImgType(\'' + b.id + "','single')\">1 Image</button>" +
+    '<button class="tbtn2' + (b.imageType==="pair"?" on":"") + '" onclick="setImgType(\'' + b.id + "','pair')\">2 Images</button>" +
+    '<button class="tbtn2' + (b.imageType==="triple"?" on":"") + '" onclick="setImgType(\'' + b.id + "','triple')\">3 Images</button></div>" +
+    ex;
+              
           } else if (b.type === "review") {
             if (!b.items && (b.name !== undefined || b.text !== undefined)) {
               b.items = [{ name: b.name||"", location: b.location||"", rating: b.rating||5, text: b.text||"", verified: !!b.verified, date: b.date||"" }];
@@ -6676,8 +6727,10 @@ w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
   }
 }
         blocks.forEach(function (b, _ri) {
-          if (b.type === "section") {
-            h += '<div class="section" data-block-id="' + b.id + '">\n';
+         if (b.type === "section") {
+  var hasContent = b.heading || b.text || (b.imageType !== "none" && (b.imgUrl || b.imgL || b.imgM || b.imgR));
+  if (!hasContent) return;
+  h += '<div class="section" data-block-id="' + b.id + '">\n';
             if (b.heading) h += '<h2 class="sh">' + parseContent(b.heading) + "</h2>\n";
             if (b.text) {
               h += '<div class="sb">\n';
@@ -6918,6 +6971,40 @@ w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
               if (item && item.trim()) h += "<li><span>" + parseLinks(item) + "</span></li>\n";
             });
             h += "</" + tag + ">\n</div>\n";
+            } else if (b.type === "imageonly") {
+  if (b.imageType === "single" && b.imgUrl) {
+    var siMH = b.imgHM || 200;
+    h += '<style>@media(max-width:768px){#simg-' + b.id + '{height:' + siMH + 'px !important;}}</style>\n';
+    var siStyle = "width:" + (b.imgW||100) + "%;height:" + (b.imgH||400) + "px;object-fit:cover;display:block;";
+    var si = '<img id="simg-' + b.id + '" class="simg" style="' + siStyle + '" src="' + ea(b.imgUrl) + '" alt="" loading="lazy">';
+    h += '<div class="section" data-block-id="' + b.id + '">\n';
+    h += b.imgLink ? '<a href="' + ea(b.imgLink) + '" class="simg-wrap">' + si + "</a>\n" : '<div class="simg-wrap">' + si + "</div>\n";
+    if (b.caption) h += '<p class="cap">' + eh(b.caption) + "</p>\n";
+    h += "</div>\n";
+  } else if (b.imageType === "pair" && (b.imgL || b.imgR)) {
+    var pairMH = b.pairHM || 160;
+    h += '<style>@media(max-width:768px){#pair-' + b.id + ' img{height:' + pairMH + 'px !important;}}</style>\n';
+    var pairStyle = "width:100%;height:" + (b.pairH||280) + "px;object-fit:cover;display:block;";
+    h += '<div class="section" data-block-id="' + b.id + '">\n';
+    h += '<div id="pair-' + b.id + '" class="pair">\n';
+    if (b.imgL) { var iL = '<img style="' + pairStyle + '" src="' + ea(b.imgL) + '" alt="" loading="lazy">'; h += b.imgLLink ? '<a href="' + ea(b.imgLLink) + '" class="pair-item">' + iL + "</a>\n" : '<div class="pair-item">' + iL + "</div>\n"; }
+    if (b.imgR) { var iR = '<img style="' + pairStyle + '" src="' + ea(b.imgR) + '" alt="" loading="lazy">'; h += b.imgRLink ? '<a href="' + ea(b.imgRLink) + '" class="pair-item">' + iR + "</a>\n" : '<div class="pair-item">' + iR + "</div>\n"; }
+    h += "</div>\n";
+    if (b.caption) h += '<p class="cap">' + eh(b.caption) + "</p>\n";
+    h += "</div>\n";
+  } else if (b.imageType === "triple" && (b.imgL || b.imgM || b.imgR)) {
+    var triMH = b.tripleHM || 140;
+    h += '<style>@media(max-width:768px){#tri-' + b.id + ' img{height:' + triMH + 'px !important;}}</style>\n';
+    var triStyle = "width:100%;height:" + (b.tripleH||220) + "px;object-fit:cover;display:block;";
+    h += '<div class="section" data-block-id="' + b.id + '">\n';
+    h += '<div id="tri-' + b.id + '" class="triple">\n';
+    if (b.imgL) { var tL = '<img style="' + triStyle + '" src="' + ea(b.imgL) + '" alt="" loading="lazy">'; h += b.imgLLink ? '<a href="' + ea(b.imgLLink) + '" class="triple-item">' + tL + "</a>\n" : '<div class="triple-item">' + tL + "</div>\n"; }
+    if (b.imgM) { var tM = '<img style="' + triStyle + '" src="' + ea(b.imgM) + '" alt="" loading="lazy">'; h += b.imgMLink ? '<a href="' + ea(b.imgMLink) + '" class="triple-item">' + tM + "</a>\n" : '<div class="triple-item">' + tM + "</div>\n"; }
+    if (b.imgR) { var tR = '<img style="' + triStyle + '" src="' + ea(b.imgR) + '" alt="" loading="lazy">'; h += b.imgRLink ? '<a href="' + ea(b.imgRLink) + '" class="triple-item">' + tR + "</a>\n" : '<div class="triple-item">' + tR + "</div>\n"; }
+    h += "</div>\n";
+    if (b.caption) h += '<p class="cap">' + eh(b.caption) + "</p>\n";
+    h += "</div>\n";
+  }
           } else if (b.type === "review") {
             /* migrate old format (direct props) to items array */
             if (!b.items && (b.name !== undefined || b.text !== undefined)) {
