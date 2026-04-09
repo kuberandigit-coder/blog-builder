@@ -7016,13 +7016,14 @@ w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
             var rvs = b.items || [];
             var useGrid = rvs.length > 1;
             if (useGrid) h += '<div class="review-grid" data-block-id="' + b.id + '">\n';
-            rvs.forEach(function (rv) {
+rvs.forEach(function (rv) {
 var stars = "";
 for (var si = 1; si <= 5; si++) {
   stars += si <= (rv.rating || 5)
     ? '<span class="rv-star rv-star-filled">&#9733;</span>'
     : '<span class="rv-star rv-star-empty">&#9734;</span>';
 }
+h += '<div class="review-block"' + (!useGrid ? ' data-block-id="' + b.id + '"' : "") + '>\n';
 h += '<div class="review-stars">' + stars + "</div>\n";
               if (rv.text) h += '<p class="review-text">\u201c' + eh(rv.text) + '\u201d</p>\n';
               h += '<div class="review-meta">\n';
