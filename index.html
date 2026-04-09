@@ -6709,11 +6709,12 @@ w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
       }
       function buildBody() {
         syncSectionBlocks();
-        var title = document.getElementById("f-title").value.trim(),
-          heroUrl = document.getElementById("f-hero").value.trim(),
-          heroLink = document.getElementById("f-hero-link").value.trim(),
-          intro = document.getElementById("f-intro").value.trim(),
-          h = "";
+var title = document.getElementById("f-title").value.trim(),
+  heroUrl = document.getElementById("f-hero").value.trim(),
+  heroLink = document.getElementById("f-hero-link").value.trim(),
+  intro = document.getElementById("f-intro").value.trim(),
+  h = "",
+  _inlineStyles = [];
         if (title) h += '<h1 class="title" data-block-id="__details">' + eh(title) + "</h1>\n";
         if (heroUrl) {
           var hi = '<img class="hero" src="' + ea(heroUrl) + '" alt="' + eh(title) + '" loading="eager">';
@@ -6744,7 +6745,7 @@ w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
             }
             if (b.imageType === "single" && b.imgUrl) {
               var siMH = b.imgHM || 200;
-              h += '<style>@media(max-width:768px){#simg-' + b.id + '{height:' + siMH + 'px !important;}}</style>\n';
+             _inlineStyles.push('<style>@media(max-width:768px){#simg-' + b.id + '{height:' + siMH + 'px !important;}}</style>');
               var siStyle =
                 "width:" + (b.imgW || 100) + "%;height:" + (b.imgH || 400) + "px;object-fit:cover;display:block;";
               var si = '<img id="simg-' + b.id + '" class="simg" style="' + siStyle + '" src="' + ea(b.imgUrl) + '" alt="" loading="lazy">';
@@ -6977,7 +6978,7 @@ w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
             } else if (b.type === "imageonly") {
   if (b.imageType === "single" && b.imgUrl) {
     var siMH = b.imgHM || 200;
-    h += '<style>@media(max-width:768px){#simg-' + b.id + '{height:' + siMH + 'px !important;}}</style>\n';
+    _inlineStyles.push('<style>@media(max-width:768px){#simg-' + b.id + '{height:' + siMH + 'px !important;}}</style>');
     var siStyle = "width:" + (b.imgW||100) + "%;height:" + (b.imgH||400) + "px;object-fit:cover;display:block;";
     var si = '<img id="simg-' + b.id + '" class="simg" style="' + siStyle + '" src="' + ea(b.imgUrl) + '" alt="" loading="lazy">';
     h += '<div class="section" data-block-id="' + b.id + '">\n';
@@ -7036,6 +7037,7 @@ h += '<div class="review-stars">' + stars + "</div>\n";
             if (useGrid) h += "</div>\n";
           }
         });
+        h = _inlineStyles.join('\n') + h;
         return h;
       }
 
