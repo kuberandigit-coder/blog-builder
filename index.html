@@ -6445,7 +6445,7 @@ w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
       }
       function buildCSS(s) {
         return (
-          "img{display:block;max-width:100%;height:auto;}a{color:inherit;text-decoration:none;}strong,b{font-weight:700;}.inline-link{color:" +
+          "*{box-sizing:border-box;}p{margin:0;padding:0;}div{margin:0;padding:0;}h1,h2,h3,h4,h5,h6{margin:0;padding:0;}ul,ol,li{margin:0;padding:0;}details,summary{margin:0;padding:0;}table{margin:0;}img{display:block;max-width:100%;height:auto;margin:0;padding:0;}a{color:inherit;text-decoration:none;}strong,b{font-weight:700;}.inline-link{color:" +
           s.lnk +
           ";text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px;font-weight:inherit;transition:opacity .15s;}.inline-link:hover{opacity:.72;}.inline-link strong,.inline-link em,.inline-link u,strong .inline-link,em .inline-link,u .inline-link{color:" +
           s.lnk +
@@ -7217,7 +7217,7 @@ var scrollBtn =
   '})();<\/script>';
 
 return (
-  '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>' +
+  '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>p{margin:0 0 20px;}div{margin-bottom:10px;}img{margin-bottom:8px;}' +
   buildCSS(s) +
   "</style>" +
   cs +
