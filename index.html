@@ -6676,7 +6676,10 @@ w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
           ".review-grid{display:grid;grid-template-columns:1fr 1fr;gap:" + Math.round(s.sg * 0.6) + "px;margin-bottom:" + s.sg + "px;}" +
           ".review-grid .review-block{margin-bottom:0;}" +
           ".review-block{margin-bottom:" + s.sg + "px;background:#fff;border:1px solid #e8e8e8;border-radius:14px;padding:28px 32px;box-shadow:0 2px 12px rgba(0,0,0,.06);}" +
-          ".review-stars{font-size:17px;margin-bottom:14px;letter-spacing:1px;color:#22c55e;}" +
+          ".review-stars{font-size:17px;margin-bottom:14px;letter-spacing:2px;}" +
+".rv-star{display:inline-block;}" +
+".rv-star-filled{color:#f59e0b;}" +
+".rv-star-empty{color:#d1d5db;}" +
           ".review-text{font-size:" + s.bs + "px;line-height:" + s.lh + ";color:" + s.bdy + ";font-style:italic;margin:0 0 18px;}" +
           ".review-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;}" +
           ".review-name{font-weight:700;color:" + s.hdg + ";font-size:" + (s.bs - 1) + "px;}" +
@@ -7014,10 +7017,13 @@ w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
             var useGrid = rvs.length > 1;
             if (useGrid) h += '<div class="review-grid" data-block-id="' + b.id + '">\n';
             rvs.forEach(function (rv) {
-              var stars = "";
-              for (var si = 0; si < (rv.rating || 5); si++) stars += "&#9733;";
-              h += '<div class="review-block"' + (!useGrid ? ' data-block-id="' + b.id + '"' : "") + '>\n';
-              h += '<div class="review-stars">' + stars + "</div>\n";
+var stars = "";
+for (var si = 1; si <= 5; si++) {
+  stars += si <= (rv.rating || 5)
+    ? '<span class="rv-star rv-star-filled">&#9733;</span>'
+    : '<span class="rv-star rv-star-empty">&#9734;</span>';
+}
+h += '<div class="review-stars">' + stars + "</div>\n";
               if (rv.text) h += '<p class="review-text">\u201c' + eh(rv.text) + '\u201d</p>\n';
               h += '<div class="review-meta">\n';
               if (rv.name) h += '<span class="review-name">' + eh(rv.name) + "</span>\n";
