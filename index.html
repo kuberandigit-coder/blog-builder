@@ -2318,6 +2318,8 @@
       .add-review:hover { background: #fdf6e3; }
       .add-imageonly { border: 2px dashed #a8d4a8; color: #2a6e2a; }
       .add-imageonly:hover { background: #eaf5ea; }
+      .add-imgtxt { border: 2px dashed #f0a060; color: #a04800; }
+      .add-imgtxt:hover { background: #fff5ed; }
       /* ── HIGHLIGHT SWATCHES ── */
       .hl-swatch-row {
         display: flex;
@@ -3274,6 +3276,7 @@
               <button class="addbtn add-bullets" onclick="addBlock('bullets')">&#9679; Bullet List</button>
               <button class="addbtn add-review" onclick="addBlock('review')">&#11088; Customer Review</button>
               <button class="addbtn add-imageonly" onclick="addBlock('imageonly')">🖼 Image </button>
+              <button class="addbtn add-imgtxt" onclick="addBlock('imgtxt')">&#128444; Image + Text</button>
             </div>
             <div class="sumbar" id="sumbar" style="display: none">
               <span>&#128221; <strong id="s-s">0</strong></span>
@@ -4312,6 +4315,7 @@
         else if (type === "highlight") Object.assign(b, { hlStyle: "tip", label: "", text: "", hlBorderColor: "#f97316" });
         else if (type === "bullets") Object.assign(b, { heading: "", intro: "", listStyle: "bullet", items: [""] });
         else if (type === "review") Object.assign(b, { verifiedLabel: "", items: [{ name: "", location: "", rating: 5, text: "", verified: true, date: "" }] });
+        else if (type === "imgtxt") Object.assign(b, { heading: "", text: "", imgUrl: "", imgPos: "right", imgW: 45, imgH: 380, imgHM: 220 });
         else if (type === "imageonly") Object.assign(b, {
   imageType: "single",
   imgUrl: "", imgLink: "",
@@ -4383,7 +4387,8 @@ closeBtn.innerHTML = '<button style="padding:5px 20px;background:#f0f0f0;border:
     { type:'hotspot',  icon:'🏳', label:'Hotspot'    },
     { type:'highlight',icon:'💡', label:'Highlight'  },
     { type:'bullets',  icon:'●',  label:'Bullets'    },
-    { type:'review',   icon:'⭐', label:'Review'     }
+    { type:'review',   icon:'⭐', label:'Review'     },
+    { type:'imgtxt',   icon:'🖼', label:'Img + Text' }
   ].forEach(function(item) {
     var el = document.createElement('div');
     el.className = 'insert-menu-item';
@@ -5341,6 +5346,7 @@ if (gm("product:price:amount")) {
         else if (b.type === "hotspot") t.textContent = "Hotspot: " + (b.heading || "Image").slice(0, 18);
         else if (b.type === "highlight") t.textContent = "Box: " + (b.label || "Highlight").slice(0, 22);
         else if (b.type === "bullets") t.textContent = "Bullets: " + (b.heading || "List").slice(0, 20);
+        else if (b.type === "imgtxt") t.textContent = "Img+Txt: " + (b.heading || "Section").slice(0, 20);
         else if (b.type === "review") t.textContent = "Review: " + ((b.items && b.items[0] && b.items[0].name) || "Customer").slice(0, 22);
       }
       function syncSectionBlocks() {
@@ -5478,7 +5484,9 @@ if (gm("product:price:amount")) {
                           ? "Box: " + (b.label || "Highlight").slice(0, 22)
                           : b.type === "bullets"
                             ? "Bullets: " + (b.heading || "List").slice(0, 20)
-                            : "Review: " + ((b.items && b.items[0] && b.items[0].name) || "Customer").slice(0, 22);
+                            : b.type === "imgtxt"
+  ? "Img+Txt: " + (b.heading || "Section").slice(0, 20)
+  : "Review: " + ((b.items && b.items[0] && b.items[0].name) || "Customer").slice(0, 22);
           var hd =
             '<div class="bhead"><span class="btitle">' +
             title +
@@ -6313,7 +6321,27 @@ if (gm("product:price:amount")) {
     '<button class="tbtn2' + (b.imageType==="pair"?" on":"") + '" onclick="setImgType(\'' + b.id + "','pair')\">2 Images</button>" +
     '<button class="tbtn2' + (b.imageType==="triple"?" on":"") + '" onclick="setImgType(\'' + b.id + "','triple')\">3 Images</button></div>" +
     ex;
-              
+              } else if (b.type === "imgtxt") {
+  var imgPos = b.imgPos || "right";
+  body =
+    '<input type="text" placeholder="Section heading (optional)" value="' + ea(b.heading) + '" oninput="onIn(\'' + b.id + "','heading',this.value)\">" +
+    '<textarea class="ft" placeholder="Body text..." rows="4" oninput="onIn(\'' + b.id + "','text',this.value)\">" + eh(b.text) + "</textarea>" +
+    makeLinkBtn("it-" + b.id, "function(){go();}") +
+    '<input type="url" placeholder="Image URL" value="' + ea(b.imgUrl) + '" oninput="onIn(\'' + b.id + "','imgUrl',this.value)\">" +
+    '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:.08em;text-transform:uppercase;margin:6px 0 3px;">Image Position</div>' +
+    '<div class="trow">' +
+    '<button class="tbtn2' + (imgPos === "left" ? " on" : "") + '" onclick="onIn(\'' + b.id + "','imgPos','left');renderBlocks();go()\">&#8592; Left</button>" +
+    '<button class="tbtn2' + (imgPos === "right" ? " on" : "") + '" onclick="onIn(\'' + b.id + "','imgPos','right');renderBlocks();go()\">Right &#8594;</button></div>" +
+    '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">Image Width %</span>' +
+    '<input type="range" min="20" max="70" value="' + (b.imgW || 45) + '" oninput="onIn(\'' + b.id + "','imgW',parseInt(this.value));this.nextElementSibling.textContent=this.value+'%'\">" +
+    '<span class="rval">' + (b.imgW || 45) + "%</span></div>" +
+    '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">🖥 Desktop H</span>' +
+    '<input type="range" min="80" max="800" step="10" value="' + (b.imgH || 380) + '" oninput="onIn(\'' + b.id + "','imgH',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px'\">" +
+    '<span class="rval">' + (b.imgH || 380) + "px</span></div>" +
+    '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">📱 Mobile H</span>' +
+    '<input type="range" min="60" max="500" step="10" value="' + (b.imgHM || 220) + '" oninput="onIn(\'' + b.id + "','imgHM',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px'\">" +
+    '<span class="rval">' + (b.imgHM || 220) + "px</span></div>";
+
           } else if (b.type === "review") {
             if (!b.items && (b.name !== undefined || b.text !== undefined)) {
               b.items = [{ name: b.name||"", location: b.location||"", rating: b.rating||5, text: b.text||"", verified: !!b.verified, date: b.date||"" }];
@@ -6687,6 +6715,11 @@ w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
           ".review-verified{display:inline-flex;align-items:center;gap:5px;font-size:" + (s.bs - 2) + "px;font-weight:600;color:#1d9bf0;}" +
           ".rv-badge{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#1d9bf0;color:#fff;font-size:10px;font-weight:700;flex-shrink:0;}" +
           ".review-date{color:#aaa;font-size:" + (s.bs - 2) + "px;margin-left:auto;}" +
+          ".imgtxt-block{display:flex;gap:40px;align-items:flex-start;margin-bottom:" + s.sg + "px;}" +
+".imgtxt-img{object-fit:cover;display:block;flex-shrink:0;border-radius:4px;}" +
+".imgtxt-content{flex:1;min-width:0;}" +
+".imgtxt-content .sh{margin-bottom:14px;}" +
+
           /* RESPONSIVE */
           "@media(max-width:768px){.article{padding:28px 18px 60px;}.title{font-size:clamp(26px,7vw," +
           Math.min(s.ts, 48) +
@@ -7009,6 +7042,33 @@ var title = document.getElementById("f-title").value.trim(),
     if (b.caption) h += '<p class="cap">' + eh(b.caption) + "</p>\n";
     h += "</div>\n";
   }
+  } else if (b.type === "imgtxt") {
+            if (!b.heading && !b.text && !b.imgUrl) return;
+            var imgPos = b.imgPos || "right";
+            var imgW  = b.imgW  || 45;
+            var imgH  = b.imgH  || 380;
+            var imgHM = b.imgHM || 220;
+            var flexDir = imgPos === "left" ? "row" : "row-reverse";
+            _inlineStyles.push(
+              '<style>@media(max-width:768px){' +
+              '#imgtxt-' + b.id + '{flex-direction:column !important;}' +
+              '#imgtxt-' + b.id + ' .imgtxt-img{width:100% !important;height:' + imgHM + 'px !important;}' +
+              '}</style>'
+            );
+            h += '<div id="imgtxt-' + b.id + '" class="imgtxt-block" style="flex-direction:' + flexDir + ';" data-block-id="' + b.id + '">\n';
+            if (b.imgUrl) {
+              h += '<img class="imgtxt-img" src="' + ea(b.imgUrl) + '" alt="" loading="lazy" style="width:' + imgW + '%;height:' + imgH + 'px;">\n';
+            }
+            h += '<div class="imgtxt-content">\n';
+            if (b.heading) h += '<h2 class="sh">' + parseContent(b.heading) + '</h2>\n';
+            if (b.text) {
+              h += '<div class="sb">\n';
+              b.text.split('\n').forEach(function(l){ if (l.trim()) h += '<p>' + parseLinks(l) + '</p>\n'; });
+              h += '</div>\n';
+            }
+            h += '</div>\n</div>\n';
+          } else if (b.type === "review") {
+            /* migrate old format (direct props) to items array */
           } else if (b.type === "review") {
             /* migrate old format (direct props) to items array */
             if (!b.items && (b.name !== undefined || b.text !== undefined)) {
@@ -7386,12 +7446,16 @@ return (
                 text += cell + " ";
               });
             });
-          } else if (b.type === "hotspot") {
-            text += (b.heading || "") + " ";
-            b.hotspots.forEach(function (hs) {
-              text += (hs.label || "") + " " + (hs.desc || "") + " ";
-            });
-          }
+} else if (b.type === "hotspot") {
+          text += (b.heading || "") + " ";
+          b.hotspots.forEach(function (hs) {
+            text += (hs.label || "") + " " + (hs.desc || "") + " ";
+          });
+        } else if (b.type === "imgtxt") {
+          text += (b.heading || "") + " " + (b.text || "") + " ";
+        }
+
+          
         });
         /* strip markdown/link syntax and count words */
         text = text.replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1");
