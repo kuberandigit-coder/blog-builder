@@ -1146,9 +1146,6 @@
       .bwrap.highlight {
         border-color: #b8a8e8;
       }
-      .bwrap.youtube { border-color: #f0a0a0; }
-.bwrap.youtube .bhead { background: #fff0f0; }
-.bwrap.youtube .btitle { color: #c00000; }
       .bwrap.highlight .bhead {
         background: #f0eaf8;
       }
@@ -2323,8 +2320,6 @@
       .add-imageonly:hover { background: #eaf5ea; }
       .add-imgtxt { border: 2px dashed #f0a060; color: #a04800; }
       .add-imgtxt:hover { background: #fff5ed; }
-      .add-youtube { border: 2px dashed #f0a0a0; color: #c00000; }
-      .add-youtube:hover { background: #fff0f0; }
       /* ── HIGHLIGHT SWATCHES ── */
       .hl-swatch-row {
         display: flex;
@@ -3282,7 +3277,6 @@
               <button class="addbtn add-review" onclick="addBlock('review')">&#11088; Customer Review</button>
               <button class="addbtn add-imageonly" onclick="addBlock('imageonly')">🖼 Image </button>
               <button class="addbtn add-imgtxt" onclick="addBlock('imgtxt')">&#128444; Image + Text</button>
-              <button class="addbtn add-youtube" onclick="addBlock('youtube')">&#127916; YouTube Video</button>
             </div>
             <div class="sumbar" id="sumbar" style="display: none">
               <span>&#128221; <strong id="s-s">0</strong></span>
@@ -4323,7 +4317,6 @@
         else if (type === "bullets") Object.assign(b, { heading: "", intro: "", listStyle: "bullet", items: [""] });
         else if (type === "review") Object.assign(b, { verifiedLabel: "", items: [{ name: "", location: "", rating: 5, text: "", verified: true, date: "" }] });
         else if (type === "imgtxt") Object.assign(b, { heading: "", text: "", imgUrl: "", imgPos: "right", imgW: 45, imgH: 380, imgHM: 220 });
-        else if (type === "youtube") Object.assign(b, { videoUrl: "", caption: "", maxW: 100, aspectRatio: "16:9" });
         else if (type === "imageonly") Object.assign(b, {
   imageType: "single",
   imgUrl: "", imgLink: "",
@@ -5542,8 +5535,6 @@ if (gm("product:price:amount")) {
                             ? "Bullets: " + (b.heading || "List").slice(0, 20)
                             : b.type === "imgtxt"
   ? "Img+Txt: " + (b.heading || "Section").slice(0, 20)
-  : b.type === "youtube"
-  ? "Video: " + (b.videoUrl || "YouTube").slice(0, 24)
   : "Review: " + ((b.items && b.items[0] && b.items[0].name) || "Customer").slice(0, 22);
 
 
@@ -6347,19 +6338,6 @@ if (gm("product:price:amount")) {
               '<button class="add-mini bullet" style="margin-top:4px;border-color:#c0a0e0;color:#5a2aaa;" onclick="bulkAddBullets(\'' +
               b.id +
               "')\">&#8853; Bulk Paste Items</button>";
-
-              } else if (b.type === "youtube") {
-  body =
-    '<input type="url" placeholder="YouTube URL (e.g. https://www.youtube.com/watch?v=...)" value="' + ea(b.videoUrl||"") + '" oninput="onIn(\'' + b.id + "','videoUrl',this.value)\">" +
-    '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">Max Width %</span>' +
-    '<input type="range" min="30" max="100" value="' + (b.maxW||100) + '" oninput="onIn(\'' + b.id + "','maxW',parseInt(this.value));this.nextElementSibling.textContent=this.value+'%'\">" +
-    '<span class="rval">' + (b.maxW||100) + '%</span></div>' +
-    '<div class="trow">' +
-    '<button class="tbtn2' + ((b.aspectRatio||"16:9")==="16:9"?" on":"") + '" onclick="onIn(\'' + b.id + "','aspectRatio','16:9');renderBlocks();go()\">16:9</button>" +
-    '<button class="tbtn2' + ((b.aspectRatio||"16:9")==="4:3"?" on":"") + '" onclick="onIn(\'' + b.id + "','aspectRatio','4:3');renderBlocks();go()\">4:3</button>" +
-    '<button class="tbtn2' + ((b.aspectRatio||"16:9")==="1:1"?" on":"") + '" onclick="onIn(\'' + b.id + "','aspectRatio','1:1');renderBlocks();go()\">1:1</button></div>" +
-    '<input type="text" placeholder="Caption (optional)" value="' + ea(b.caption||"") + '" oninput="onIn(\'' + b.id + "','caption',this.value)\">";
-
 
               } else if (b.type === "imageonly") {
   var ex = "";
@@ -7177,22 +7155,6 @@ h += '<div class="review-stars">' + stars + "</div>\n";
               h += "</div>\n</div>\n";
             });
            if (useGrid) h += "</div>\n";
-          } else if (b.type === "youtube") {
-            if (!b.videoUrl) return;
-            var vid = b.videoUrl;
-            var vidId = "";
-            var m = vid.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
-            if (m) vidId = m[1];
-            if (!vidId) return;
-            var padMap = {"16:9":"56.25%","4:3":"75%","1:1":"100%"};
-            var pad = padMap[b.aspectRatio||"16:9"] || "56.25%";
-            var mw = (b.maxW||100);
-            h += '<div class="section" data-block-id="' + b.id + '" style="margin-left:auto;margin-right:auto;max-width:' + mw + '%;">\n';
-            h += '<div style="position:relative;width:100%;padding-bottom:' + pad + ';height:0;overflow:hidden;border-radius:8px;">\n';
-            h += '<iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" src="https://www.youtube.com/embed/' + vidId + '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"></iframe>\n';
-            h += '</div>\n';
-            if (b.caption) h += '<p class="cap" style="margin-top:10px;">' + eh(b.caption) + '</p>\n';
-            h += '</div>\n';
           }
         });
         h = _inlineStyles.join('\n') + h;
