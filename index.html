@@ -3015,6 +3015,12 @@
             <button class="te-btn" id="tbl-split-btn" onclick="tblSplit()" style="display: none">
               &#8864; Split Cell
             </button>
+            <button class="te-btn danger" id="tbl-del-row-btn" onclick="tblDeleteSelRows()" style="display: none; background:#5a2020;">
+              &#128465; Delete Row(s)
+            </button>
+            <button class="te-btn danger" id="tbl-del-col-btn" onclick="tblDeleteSelCols()" style="display: none; background:#5a2020;">
+              &#128465; Delete Column(s)
+            </button>
             <button class="te-btn" id="tbl-done-btn" onclick="closeTableEditor()">&#10003; Done</button>
           </div>
         </div>
@@ -5238,7 +5244,9 @@ if (gm("product:price:amount")) {
       function _tblUpdBtns() {
         var s = _tblDrag,
           mb = document.getElementById("tbl-merge-btn"),
-          sb = document.getElementById("tbl-split-btn");
+          sb = document.getElementById("tbl-split-btn"),
+          drb = document.getElementById("tbl-del-row-btn"),
+          dcb = document.getElementById("tbl-del-col-btn");
         if (!mb || !sb) return;
         mb.style.display =
           s.r1 >= 0 && (Math.abs(s.c2 - s.c1) > 0 || Math.abs(s.r2 - s.r1) > 0) ? "inline-block" : "none";
@@ -5249,6 +5257,71 @@ if (gm("product:price:amount")) {
             sb.style.display = cell.cs > 1 || cell.rs > 1 ? "inline-block" : "none";
           } else sb.style.display = "none";
         } else sb.style.display = "none";
+        if (drb) drb.style.display = s.r1 >= 0 ? "inline-block" : "none";
+        if (dcb) dcb.style.display = s.r1 >= 0 ? "inline-block" : "none";
+      }
+      function _tblSplitIntersecting(r1, r2, c1, c2) {
+        var b = getBl(_tblEId);
+        if (!b) return;
+        for (var r = 0; r < b.data.length; r++) {
+          for (var c = 0; c < b.data[r].length; c++) {
+            var cell = migrateCell(b.data[r][c]);
+            if (cell.cs > 0 && (cell.cs > 1 || cell.rs > 1)) {
+              var ar2 = r + cell.rs - 1,
+                ac2 = c + cell.cs - 1;
+              if (r <= r2 && ar2 >= r1 && c <= c2 && ac2 >= c1) {
+                for (var rr = r; rr <= ar2; rr++)
+                  for (var cc = c; cc <= ac2; cc++) {
+                    if (rr === r && cc === c) {
+                      b.data[rr][cc].cs = 1;
+                      b.data[rr][cc].rs = 1;
+                    } else b.data[rr][cc] = { v: "", cs: 1, rs: 1 };
+                  }
+              }
+            }
+          }
+        }
+      }
+      function tblDeleteSelRows() {
+        var b = getBl(_tblEId);
+        if (!b) return;
+        var s = _tblDrag;
+        if (s.r1 < 0) return;
+        var r1 = Math.min(s.r1, s.r2),
+          r2 = Math.max(s.r1, s.r2);
+        var min = b.hasHeader ? 2 : 1;
+        var count = r2 - r1 + 1;
+        if (b.data.length - count < min) {
+          toast("Need at least 1 data row", "#5a2020");
+          return;
+        }
+        _tblSplitIntersecting(r1, r2, 0, b.data[0].length - 1);
+        b.data.splice(r1, count);
+        _tblDrag = { active: false, r1: -1, c1: -1, r2: -1, c2: -1 };
+        _renderTblE();
+        go();
+        toast(count + " row" + (count > 1 ? "s" : "") + " deleted", "#1a4e2a");
+      }
+      function tblDeleteSelCols() {
+        var b = getBl(_tblEId);
+        if (!b) return;
+        var s = _tblDrag;
+        if (s.r1 < 0) return;
+        var c1 = Math.min(s.c1, s.c2),
+          c2 = Math.max(s.c1, s.c2);
+        var count = c2 - c1 + 1;
+        if (b.data[0].length - count < 1) {
+          toast("Need at least 1 column", "#5a2020");
+          return;
+        }
+        _tblSplitIntersecting(0, b.data.length - 1, c1, c2);
+        b.data.forEach(function (row) {
+          row.splice(c1, count);
+        });
+        _tblDrag = { active: false, r1: -1, c1: -1, r2: -1, c2: -1 };
+        _renderTblE();
+        go();
+        toast(count + " column" + (count > 1 ? "s" : "") + " deleted", "#1a4e2a");
       }
       function tblMerge() {
         var b = getBl(_tblEId);
@@ -5509,6 +5582,10 @@ if (gm("product:price:amount")) {
       }
       function renderBlocks() {
         var c = document.getElementById("blist");
+        if (_insertMenuOpen >= 0) {
+          _insertMenuOpen = -1;
+          c.classList.remove("menu-open");
+        }
         c.innerHTML = "";
         if (blocks.length > 0) c.appendChild(makeInsertRow(0));
         var n = blocks.length;
@@ -8575,7 +8652,7 @@ window.addEventListener("message", function (e) {
 document.addEventListener("click", function (e) {
         if (_insertMenuOpen >= 0) {
           var mp = document.getElementById('insert-menu-popup');
-          if (mp && !mp.contains(e.target) && !e.target.classList.contains('insert-btn')) {
+          if (!mp || (!mp.contains(e.target) && !e.target.classList.contains('insert-btn'))) {
             closeInsertMenu();
           }
         }
