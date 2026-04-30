@@ -7574,10 +7574,13 @@ return (
         var scopedCss = scopeCSS(css, articleClass);
         var faqSchema = buildFaqSchema();
         var out = faqSchema + "<style>\n" + scopedCss + '\n</style>\n<div class="' + cm["article"] + '">\n' + body + "\n</div>";
-        /* Shopify runs article.content through newline_to_br, turning every \n
-           between block tags into a phantom <br>. Collapse whitespace between
-           tags so those <br>s never appear on the live page. */
-        out = out.replace(/>[ \t]*\n[ \t\n]*</g, "><");
+        /* Shopify pipes article.content through newline_to_br, turning every
+           stray \n into a phantom <br>. Strip ALL newlines from the body
+           portion (preserving them inside <style> and <script> blocks where
+           Liquid filters do not apply). */
+        out = out.replace(/<(style|script)[^>]*>[\s\S]*?<\/\1>|\n+/g, function (m, tag) {
+          return tag ? m : "";
+        });
         return out;
       }
 var _ast = null;
