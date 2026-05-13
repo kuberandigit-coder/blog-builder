@@ -7619,8 +7619,10 @@ var title = document.getElementById("f-title").value.trim(),
   var hasContent = b.heading || b.text || (b.imageType !== "none" && (b.imgUrl || b.imgL || b.imgM || b.imgR));
   if (!hasContent) return;
   h += '<div class="section" data-block-id="' + b.id + '">\n';
-            if (b.heading) h += '<h2 class="sh">' + parseContent(b.heading) + "</h2>\n";
-            if (b.text) {
+            if ((b.heading || '').trim()) h += '<h2 class="sh">' + parseContent(b.heading) + "</h2>\n";
+            /* Only emit .sb wrapper if there's at least one non-empty line —
+               prevents Shopify from rendering an empty <div> as blank space. */
+            if ((b.text || '').trim()) {
               h += '<div class="sb">\n';
               b.text.split("\n").forEach(function (l) {
                 if (l.trim()) h += "<p>" + parseLinks(l) + "</p>\n";
@@ -7655,7 +7657,7 @@ var title = document.getElementById("f-title").value.trim(),
                   : '<div class="pair-item">' + iR + "</div>\n";
               }
               h += "</div>\n";
-              if (b.caption) h += '<p class="cap">' + eh(b.caption) + "</p>\n";
+              if ((b.caption || '').trim()) h += '<p class="cap">' + eh(b.caption) + "</p>\n";
             }
             if (b.imageType === "triple") {
               var triMH = b.tripleHM || 140;
@@ -7681,14 +7683,14 @@ var title = document.getElementById("f-title").value.trim(),
                   : '<div class="triple-item">' + tR + "</div>\n";
               }
               h += "</div>\n";
-              if (b.caption) h += '<p class="cap">' + eh(b.caption) + "</p>\n";
+              if ((b.caption || '').trim()) h += '<p class="cap">' + eh(b.caption) + "</p>\n";
             }
             h += "</div>\n";
           } else if (b.type === "cta") {
             var ctaAlign = b.align || "center";
             h += '<div class="cta-block" style="text-align:' + ctaAlign + ';" data-block-id="' + b.id + '">\n';
-            if (b.label) h += '<h2 class="cta-heading">' + eh(b.label) + "</h2>\n";
-            if (b.desc) {
+            if ((b.label || '').trim()) h += '<h2 class="cta-heading">' + eh(b.label) + "</h2>\n";
+            if ((b.desc || '').trim()) {
               h += '<div class="cta-desc">';
               b.desc.split("\n").forEach(function (l) {
                 if (l.trim()) h += "<p>" + parseLinks(l) + "</p>";
@@ -7843,8 +7845,8 @@ var title = document.getElementById("f-title").value.trim(),
             h += parseLinks(b.text || "") + "\n</div>\n";
           } else if (b.type === "bullets") {
             h += '<div class="bullets-block" data-block-id="' + b.id + '">\n';
-            if (b.heading) h += '<h2 class="bullets-heading">' + eh(b.heading) + "</h2>\n";
-            if (b.intro) {
+            if ((b.heading || '').trim()) h += '<h2 class="bullets-heading">' + eh(b.heading) + "</h2>\n";
+            if ((b.intro || '').trim()) {
   var bIntroLines = b.intro.split("\n").filter(function(l){ return l.trim(); });
   if (bIntroLines.length > 1) {
     h += '<div class="bullets-intro">' + bIntroLines.map(function(l){ return '<p>' + parseLinks(l) + '</p>'; }).join('\n') + "</div>\n";
@@ -7867,7 +7869,7 @@ var title = document.getElementById("f-title").value.trim(),
     var si = '<img id="simg-' + b.id + '" class="simg" style="' + siStyle + '" src="' + ea(b.imgUrl) + '" alt="' + ea(b.imgAlt || "") + '" loading="lazy">';
     h += '<div class="section" data-block-id="' + b.id + '">\n';
     h += b.imgLink ? '<a href="' + ea(b.imgLink) + '" class="simg-wrap">' + si + "</a>\n" : '<div class="simg-wrap">' + si + "</div>\n";
-    if (b.caption) h += '<p class="cap">' + eh(b.caption) + "</p>\n";
+    if ((b.caption || '').trim()) h += '<p class="cap">' + eh(b.caption) + "</p>\n";
     h += "</div>\n";
   } else if (b.imageType === "pair" && (b.imgL || b.imgR)) {
     var pairMH = b.pairHM || 160;
@@ -7878,7 +7880,7 @@ var title = document.getElementById("f-title").value.trim(),
     if (b.imgL) { var iL = '<img style="' + pairStyle + '" src="' + ea(b.imgL) + '" alt="' + ea(b.imgLAlt || "") + '" loading="lazy">'; h += b.imgLLink ? '<a href="' + ea(b.imgLLink) + '" class="pair-item">' + iL + "</a>\n" : '<div class="pair-item">' + iL + "</div>\n"; }
     if (b.imgR) { var iR = '<img style="' + pairStyle + '" src="' + ea(b.imgR) + '" alt="' + ea(b.imgRAlt || "") + '" loading="lazy">'; h += b.imgRLink ? '<a href="' + ea(b.imgRLink) + '" class="pair-item">' + iR + "</a>\n" : '<div class="pair-item">' + iR + "</div>\n"; }
     h += "</div>\n";
-    if (b.caption) h += '<p class="cap">' + eh(b.caption) + "</p>\n";
+    if ((b.caption || '').trim()) h += '<p class="cap">' + eh(b.caption) + "</p>\n";
     h += "</div>\n";
   } else if (b.imageType === "triple" && (b.imgL || b.imgM || b.imgR)) {
     var triMH = b.tripleHM || 140;
@@ -7890,7 +7892,7 @@ var title = document.getElementById("f-title").value.trim(),
     if (b.imgM) { var tM = '<img style="' + triStyle + '" src="' + ea(b.imgM) + '" alt="' + ea(b.imgMAlt || "") + '" loading="lazy">'; h += b.imgMLink ? '<a href="' + ea(b.imgMLink) + '" class="triple-item">' + tM + "</a>\n" : '<div class="triple-item">' + tM + "</div>\n"; }
     if (b.imgR) { var tR = '<img style="' + triStyle + '" src="' + ea(b.imgR) + '" alt="' + ea(b.imgRAlt || "") + '" loading="lazy">'; h += b.imgRLink ? '<a href="' + ea(b.imgRLink) + '" class="triple-item">' + tR + "</a>\n" : '<div class="triple-item">' + tR + "</div>\n"; }
     h += "</div>\n";
-    if (b.caption) h += '<p class="cap">' + eh(b.caption) + "</p>\n";
+    if ((b.caption || '').trim()) h += '<p class="cap">' + eh(b.caption) + "</p>\n";
     h += "</div>\n";
   }
   } else if (b.type === "imgtxt") {
@@ -7911,9 +7913,9 @@ var title = document.getElementById("f-title").value.trim(),
               h += '<img class="imgtxt-img" src="' + ea(b.imgUrl) + '" alt="' + ea(b.imgAlt || b.heading || "") + '" loading="lazy" style="width:' + imgW + '%;height:' + imgH + 'px;">\n';
             }
             h += '<div class="imgtxt-content">\n';
-          if (b.heading) h += '<h2 class="sh">' + parseContent(b.heading) + '</h2>\n';
-            if (b.subheading) h += '<h3 class="imgtxt-subheading">' + parseContent(b.subheading) + '</h3>\n';
-            if (b.text) {
+          if ((b.heading || '').trim()) h += '<h2 class="sh">' + parseContent(b.heading) + '</h2>\n';
+            if ((b.subheading || '').trim()) h += '<h3 class="imgtxt-subheading">' + parseContent(b.subheading) + '</h3>\n';
+            if ((b.text || '').trim()) {
               h += '<div class="sb">\n';
               b.text.split('\n').forEach(function(l){ if (l.trim()) h += '<p>' + parseLinks(l) + '</p>\n'; });
               h += '</div>\n';
@@ -10869,4 +10871,3 @@ document.addEventListener('keydown', function(e) {
     </script>
   </body>
 </html>
-
