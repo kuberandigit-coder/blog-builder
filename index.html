@@ -4802,19 +4802,54 @@ function parseShopEl(el, map) {
       var img = card.querySelector('img');
       if (img) c.img = img.getAttribute('src') || '';
 
-      /* Name: look up the precise .shop-card-name element. Never use a body
-         wrapper — that would slurp price/button text into the name. */
+      /* ---- Name ---- with fallbacks for different export class names. */
       var nameEl = findByClass(card, 'shop-card-name');
+      if (!nameEl) nameEl = card.querySelector('h3, h2, h4'); /* fallback: heading tag */
+      if (!nameEl) {
+        /* fallback: first text-leaf div whose text has NO currency symbol */
+        var leafDivs = card.querySelectorAll('div');
+        for (var di = 0; di < leafDivs.length; di++) {
+          var d = leafDivs[di];
+          if (d.children.length === 0) {
+            var t = (d.textContent || '').trim();
+            if (t && !/[£$€¥]/.test(t) && !/shop\s*now/i.test(t)) { nameEl = d; break; }
+          }
+        }
+      }
       if (nameEl) c.name = (nameEl.textContent || '').trim();
 
-      /* Price block: read children directly so compare-price <span> is split out. */
+      /* ---- Price + compare price ---- */
       var priceEl = findByClass(card, 'shop-card-price');
+      if (!priceEl) {
+        /* fallback: any element whose direct text contains a currency symbol
+           but is NOT a wrapper (no nested div children) */
+        var allEls = card.querySelectorAll('div, span, p');
+        for (var pi = 0; pi < allEls.length; pi++) {
+          var pe = allEls[pi];
+          /* skip wrappers that contain other shop-card sub-elements */
+          if (pe.querySelector('a')) continue;
+          var directText = pe.textContent || '';
+          if (/[£$€¥]\s*\d/.test(directText) && (pe.children.length <= 1 ||
+              Array.from(pe.children).every(function(ch){ return ch.tagName === 'SPAN'; }))) {
+            priceEl = pe; break;
+          }
+        }
+      }
       if (priceEl) {
-        /* The compare-price span (line-through) is the OLD price. */
+        /* Compare price: try mapped class first, fall back to inline line-through,
+           and finally to "second price-like text node in the price element". */
         var cmp = priceEl.querySelector('span');
-        if (cmp && hasClass(cmp, 'shop-card-compare', map)) {
-          c.comparePrice = (cmp.textContent || '').trim();
-          /* Build c.price from priceEl's text WITHOUT the compare span. */
+        var cmpText = null;
+        if (cmp) {
+          var hasCmpClass   = hasClass(cmp, 'shop-card-compare', map);
+          var hasLineThru   = /line-through/i.test(cmp.getAttribute('style') || '');
+          var looksLikePrice = /[£$€¥]\s*[\d.,]+/.test((cmp.textContent || '').trim());
+          if (hasCmpClass || hasLineThru || looksLikePrice) {
+            cmpText = (cmp.textContent || '').trim();
+          }
+        }
+        if (cmpText) {
+          c.comparePrice = cmpText;
           var clone = priceEl.cloneNode(true);
           var cmpInClone = clone.querySelector('span');
           if (cmpInClone) cmpInClone.remove();
