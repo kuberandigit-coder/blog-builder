@@ -3004,6 +3004,25 @@
     </style>
   </head>
   <body>
+<div id="import-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#fff;width:min(720px,92vw);max-height:88vh;display:flex;flex-direction:column;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;font-family:Jost,sans-serif;">
+    <div style="padding:14px 18px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+      <strong style="font-size:15px;">Import HTML</strong>
+      <button onclick="closeImportModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;">&times;</button>
+    </div>
+    <div style="padding:14px 18px;font-size:12px;color:#666;line-height:1.55;">
+      Paste HTML exported from this tool. Currently supported: <strong>Section</strong> blocks (heading, body text, single / pair / triple images, captions). Other block types will be ignored for now.
+      <br><label style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;"><input type="checkbox" id="import-replace" checked> Replace existing blocks (uncheck to append)</label>
+    </div>
+    <textarea id="import-ta" placeholder="Paste exported HTML here..." style="flex:1;min-height:280px;margin:0 18px;padding:10px;border:1px solid #d0d8e8;border-radius:6px;font-family:monospace;font-size:12px;resize:vertical;"></textarea>
+    <div id="import-status" style="padding:8px 18px;font-size:12px;color:#274b80;min-height:18px;"></div>
+    <div style="padding:2px 18px 6px 18px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:8px;">
+      <button onclick="closeImportModal()" style="padding:8px 16px;border:1px solid #ccc;background:#fff;border-radius:6px;cursor:pointer;">Cancel</button>
+      <button onclick="runImportHTML()" style="padding:8px 18px;border:none;background:#274b80;color:#fff;border-radius:6px;cursor:pointer;font-weight:600;">Import</button>
+    </div>
+  </div>
+</div>
+
     <div id="tbl-editor-overlay">
       <div id="tbl-editor-panel">
         <div id="tbl-editor-head">
@@ -3201,6 +3220,7 @@
         <button class="tbtn-top" id="btn-history-top" onclick="openHistory()">
           &#128336; History <span class="hist-badge" id="hist-top-badge">0</span>
         </button>
+        <button class="tbtn-top" id="btn-import-top" onclick="openImportModal()" style="background:#1a3a2a;color:#80d0a0;border:1px solid #2a6a4a;">&#128229; Import HTML</button>
         <button class="tbtn-top" id="btn-dl" onclick="doDownload()">&#8595; Download HTML</button>
       </div>
     </div>
@@ -3287,7 +3307,9 @@
               <button class="addbtn add-review" onclick="addBlock('review')">&#11088; Customer Review</button>
               <button class="addbtn add-imageonly" onclick="addBlock('imageonly')">🖼 Image </button>
               <button class="addbtn add-imgtxt" onclick="addBlock('imgtxt')">&#128444; Image + Text</button>
+             
             </div>
+
             <div class="sumbar" id="sumbar" style="display: none">
               <span>&#128221; <strong id="s-s">0</strong></span>
               <span>&#128279; <strong id="s-c">0</strong></span>
@@ -4424,6 +4446,667 @@ function closeInsertMenu() {
   _insertMenuOpen = -1;
   var bl = document.getElementById('blist'); if (bl) bl.classList.remove('menu-open');
 }
+
+/* ================================================================
+   IMPORT HTML  (Step 2: full block coverage)
+   ----------------------------------------------------------------
+   Parses HTML produced by buildDoc() back into the blocks[] array.
+   Class names in exported HTML are mangled (e.g. ".section" -> ".x85x33v"),
+   so we read the <style> block and build a reverse map
+   mangled -> original by matching unique CSS *signatures*.
+   For ambiguous wrappers (section/shop/faq/table/hotspot/bullets all
+   look like "margin-bottom:Npx") we classify by inspecting the element's
+   *contents* (does it contain a <table>? <details>? a shop grid? a ul?).
+   Adds no changes to any existing function.
+   ================================================================ */
+function openImportModal()  { document.getElementById('import-modal').style.display = 'flex'; }
+function closeImportModal() { document.getElementById('import-modal').style.display = 'none'; document.getElementById('import-status').textContent = ''; }
+
+/* Build mangled->original class map by reading the embedded <style>.
+   genCM() emits rules like ".originalName{...}" rewritten to ".xx{...}",
+   but the generator also keeps a class-mapping comment header. To be
+   robust we instead heuristically detect well-known structural classes
+   by their CSS signatures (e.g. the rule containing "grid-template-columns:1fr 1fr"
+   is .pair). If no map is found we fall back to original class names — which
+   works when the user pastes the *preview* HTML (un-mangled). */
+function buildClassMap(htmlStr) {
+  var map = {};                                      /* mangled -> original */
+  /* Concatenate ALL <style> blocks (export emits several) */
+  var css = '';
+  var re = /<style[^>]*>([\s\S]*?)<\/style>/gi, m;
+  while ((m = re.exec(htmlStr))) css += '\n' + m[1];
+  if (!css) return map;
+  var set = function(name, orig){ if (name && !map[name]) map[name] = orig; };
+
+  /* ---------- Pass 1: rules whose BODY has a unique signature ---------- */
+  var ruleRe = /\.([a-zA-Z][\w-]*)\s*\{([^{}]*)\}/g, r;
+  while ((r = ruleRe.exec(css))) {
+    var name = r[1], body = r[2];
+    /* uniquely identifiable bodies — first match wins */
+    if      (/aspect-ratio:\s*1\s*\/\s*1[^}]*object-fit:\s*cover/.test(body)) set(name,'shop-card-img');
+    else if (/border:1px solid #e5e5e5[^}]*border-radius:10px[^}]*overflow:hidden/.test(body)) set(name,'shop-card');
+    else if (/grid-template-columns:repeat\(2,1fr\)/.test(body)) set(name,'shop-grid-2');
+    else if (/grid-template-columns:repeat\(3,1fr\)/.test(body)) set(name,'shop-grid-3');
+    else if (/grid-template-columns:repeat\(4,1fr\)/.test(body)) set(name,'shop-grid-4');
+    else if (/grid-template-columns:1fr 1fr 1fr/.test(body)) set(name,'triple');
+    else if (/grid-template-columns:1fr 1fr;[^}]*gap:10px/.test(body)) set(name,'pair');
+    else if (/list-style:\s*none[^}]*flex-direction:\s*column[^}]*gap:\s*10px/.test(body)) set(name,'bullets-list');
+    else if (/border-radius:\s*12px[^}]*padding:\s*22px\s*26px[^}]*color:\s*#fff/.test(body)) set(name,'hl-box');
+    else if (/^\s*margin:\s*10px\s+0\s+40px;?\s*$/.test(body)) set(name,'cta-block');
+    /* Intro: border-bottom + padding-bottom appear in EITHER order in the export. */
+    else if (/border-bottom:\s*1px\s+solid/.test(body) && /padding-bottom:\s*40px/.test(body)) set(name,'intro');
+    /* Hero WRAPPER (the <div> around the hero image). Unique signature.
+       NOTE: we deliberately do NOT detect .hero (the img class) because its
+       CSS is identical to .simg — a section's single-image class. Mapping
+       both to "hero" caused sections with single images to be mis-classified. */
+    else if (/^\s*display:\s*block;\s*margin-bottom:\s*40px;?\s*$/.test(body.trim())) set(name,'hero-wrap');
+    else if (/font-weight:\s*700[^}]*line-height:\s*1\.12/.test(body)) set(name,'title');
+    else if (/^\s*display:\s*block;\s*margin:(?:14|28)px\s+0(?:\s+0)?;?\s*$/.test(body.trim())) set(name,'simg-wrap');
+    else if (/font-size:\s*12px[^}]*margin-top:\s*8px[^}]*line-height:\s*1\.5/.test(body)) set(name,'cap');
+    else if (/border-collapse:\s*collapse/.test(body)) set(name,'blog-table');
+    else if (/-webkit-overflow-scrolling:\s*touch/.test(body) && /overflow-x:\s*auto/.test(body)) set(name,'table-wrap');
+    else if (/position:\s*relative;\s*display:\s*inline-block;\s*width:\s*100%/.test(body)) set(name,'hotspot-wrap');
+    else if (/position:\s*absolute;\s*transform:\s*translate\(-50%,-50%\)/.test(body)) set(name,'hotspot-pin');
+    else if (/text-transform:\s*uppercase[^}]*letter-spacing:\s*\.08em/.test(body)) set(name,'cta-lbl');
+    else if (/background:\s*#111111[^}]*color:\s*#ffffff[^}]*padding:\s*15px\s+42px/.test(body)) set(name,'btn-filled');
+    else if (/border:1\.5px solid #111111[^}]*padding:\s*14px\s+42px/.test(body)) set(name,'btn-outline');
+    else if (/^\s*font-weight:\s*700;\s*margin-right:\s*6px;?\s*$/.test(body)) set(name,'hl-label');
+  }
+
+  /* ---------- Pass 2: compound-selector rules ---------- */
+  /* .X p {margin-bottom:14px;}  identifies X as .sb (body wrap) */
+  var sbRe = /\.([a-zA-Z][\w-]*)\s+p\s*\{[^}]*margin-bottom:\s*14px/g;
+  while ((r = sbRe.exec(css))) set(r[1], 'sb');
+
+  /* .X p {margin-bottom:8px;}  identifies X as .cta-desc */
+  var ctaDescRe = /\.([a-zA-Z][\w-]*)\s+p\s*\{[^}]*margin-bottom:\s*8px/g;
+  while ((r = ctaDescRe.exec(css))) set(r[1], 'cta-desc');
+
+  /* details.X — faq-item */
+  var faqItemRe = /details\.([a-zA-Z][\w-]*)/g;
+  while ((r = faqItemRe.exec(css))) set(r[1], 'faq-item');
+
+  /* ---------- Pass 3: headings & wrappers (font-weight:600 + letter-spacing) ----------
+     Several wrapper-headings share the same look. Map every match to "heading-like";
+     we'll treat any of these as a possible heading depending on block context. */
+  var headRe = /\.([a-zA-Z][\w-]*)\s*\{[^}]*font-weight:\s*600[^}]*letter-spacing:\s*-\.01em/g;
+  while ((r = headRe.exec(css))) {
+    /* don't overwrite if already mapped (e.g. cta-heading literal) */
+    if (!map[r[1]]) map[r[1]] = 'heading';
+  }
+  return map;
+}
+
+/* Heuristic block-type classifier from descendant content.
+   For each top-level child of the article, we look at what's inside. */
+function classifyBlock(el, map) {
+  if (!el || el.nodeType !== 1) return null;
+  var html  = el.innerHTML || '';
+  var tag   = el.tagName;
+
+  /* Title (h1) */
+  if (tag === 'H1') return 'title';
+  /* Intro paragraph (.intro) */
+  if (tag === 'P'  && hasClass(el, 'intro', map)) return 'intro';
+  /* Hero wrapper ONLY — detect by the wrapper class itself, never by deep
+     descendant img class (that would false-match section single-image divs
+     which share .hero's CSS shape). */
+  if (hasClass(el, 'hero-wrap', map)) return 'hero';
+
+  /* Direct class hits */
+  if (hasClass(el, 'cta-block', map))     return 'cta';
+  if (hasClass(el, 'hl-box', map))        return 'highlight';
+  if (hasClass(el, 'imgtxt-block', map) || el.querySelector && el.querySelector('.imgtxt-content')) return 'imgtxt';
+  if (hasClass(el, 'review-block', map) || el.classList && Array.from(el.classList).some(function(c){return c==='review-grid';})) return 'review';
+
+  /* Detect by descendants */
+  if (el.querySelector) {
+    if (el.querySelector('details')) return 'faq';
+    if (el.querySelector('table'))   return 'table';
+    /* hotspot has absolutely-positioned pins */
+    if (hasClassDeep(el, 'hotspot-pin', map) || (el.querySelector('a[style*="position:absolute"], a[style*="position: absolute"]'))) return 'hotspot';
+    /* shop block has shop-card grid */
+    if (hasClassDeep(el, 'shop-card', map) || hasClassDeep(el, 'shop-grid-2', map) || hasClassDeep(el, 'shop-grid-3', map) || hasClassDeep(el, 'shop-grid-4', map)) return 'shop';
+    /* bullets list direct child */
+    var ul = el.querySelector('ul');
+    if (ul && (hasClass(ul, 'bullets-list', map) || el.children.length <= 2)) return 'bullets';
+  }
+
+  /* Default: section (has heading, body, or image) */
+  return 'section';
+}
+function hasClassDeep(el, name, map) {
+  if (!el || !el.querySelectorAll) return false;
+  var all = el.querySelectorAll('*');
+  for (var i = 0; i < all.length; i++) if (hasClass(all[i], name, map)) return true;
+  return false;
+}
+
+/* Look up: given a DOM element, return its un-mangled class names as an array. */
+function unmangle(el, map) {
+  if (!el || !el.classList) return [];
+  var out = [];
+  for (var i = 0; i < el.classList.length; i++) {
+    var c = el.classList[i];
+    out.push(map[c] || c);                          /* fall back to literal */
+  }
+  return out;
+}
+function hasClass(el, name, map) { return unmangle(el, map).indexOf(name) !== -1; }
+
+/* Convert an .sb body element back into the plain-text format used by
+   block.text (one paragraph per line, blank line preserved). */
+function sbToText(sbEl) {
+  if (!sbEl) return "";
+  var ps = sbEl.querySelectorAll('p');
+  var lines = [];
+  ps.forEach(function(p){ lines.push((p.textContent || "").trim()); });
+  return lines.join("\n");
+}
+
+/* Read first <img> height (px) from a style attr, default fallback. */
+function readImgH(el, fallback) {
+  if (!el) return fallback;
+  var img = el.tagName === 'IMG' ? el : el.querySelector('img');
+  if (!img) return fallback;
+  var m = (img.getAttribute('style') || '').match(/height:\s*(\d+)px/);
+  return m ? parseInt(m[1], 10) : fallback;
+}
+
+/* ---------- helpers ---------- */
+function findChild(el, predicate) {
+  var kids = el.children || [];
+  for (var i = 0; i < kids.length; i++) if (predicate(kids[i])) return kids[i];
+  return null;
+}
+function findChildByClass(el, name, map) { return findChild(el, function(c){ return hasClass(c, name, map); }); }
+
+/* Strip a leading <span class="hl-label"> off a string and return both parts. */
+function splitLabel(el, map) {
+  var lblEl = el.querySelector(':scope > span') || el.querySelector('span');
+  var label = '';
+  if (lblEl && hasClass(lblEl, 'hl-label', map)) {
+    label = (lblEl.textContent || '').trim();
+    lblEl.remove();
+  }
+  return { label: label, text: (el.textContent || '').trim() };
+}
+
+/* ---------- SECTION ---------- */
+function parseSectionEl(secEl, map) {
+  var b = {
+    id: uid(), type: 'section',
+    imageType: 'none', heading: '', text: '',
+    imgUrl: '', imgLink: '',
+    imgL: '', imgLLink: '', imgM: '', imgMLink: '', imgR: '', imgRLink: '',
+    caption: '',
+    imgW: 100, imgH: 400, pairH: 280, tripleH: 220,
+    imgHM: 200, pairHM: 160, tripleHM: 140
+  };
+
+  /* Heading: any descendant <h2> (genCM rewrites .sh to a 'heading' class) */
+  var hEl = secEl.querySelector(':scope > h2, :scope > h3, :scope > h1');
+  if (hEl) b.heading = (hEl.textContent || '').trim();
+
+  /* Body: a div containing <p> children (.sb) */
+  var sbEl = null;
+  Array.from(secEl.children).forEach(function(c){
+    if (c.tagName === 'DIV' && c.querySelector(':scope > p')) sbEl = sbEl || c;
+  });
+  if (sbEl) b.text = sbToText(sbEl);
+
+  /* Image groups */
+  var simg = findChildByClass(secEl, 'simg-wrap', map);
+  /* Fallback: <a> child whose only descendant is <img> with width:100% style */
+  if (!simg) {
+    Array.from(secEl.children).forEach(function(c){
+      if ((c.tagName === 'A' || c.tagName === 'DIV') && c.children.length === 1 && c.children[0].tagName === 'IMG'
+          && !hasClass(c,'pair',map) && !hasClass(c,'triple',map)) simg = simg || c;
+    });
+  }
+  if (simg) {
+    var img = simg.querySelector('img');
+    if (img) {
+      b.imageType = 'single';
+      b.imgUrl = img.getAttribute('src') || '';
+      b.imgH   = readImgH(img, 400);
+      var wM   = (img.getAttribute('style') || '').match(/width:\s*(\d+)%/);
+      if (wM) b.imgW = parseInt(wM[1], 10);
+      if (simg.tagName === 'A') b.imgLink = simg.getAttribute('href') || '';
+    }
+  }
+
+  var pair = findChildByClass(secEl, 'pair', map);
+  if (pair) {
+    b.imageType = 'pair';
+    var pItems = pair.children;
+    if (pItems[0]) { var pi0 = pItems[0].querySelector('img'); if (pi0) b.imgL = pi0.getAttribute('src') || ''; if (pItems[0].tagName==='A') b.imgLLink = pItems[0].getAttribute('href') || ''; }
+    if (pItems[1]) { var pi1 = pItems[1].querySelector('img'); if (pi1) b.imgR = pi1.getAttribute('src') || ''; if (pItems[1].tagName==='A') b.imgRLink = pItems[1].getAttribute('href') || ''; }
+    b.pairH = readImgH(pair, 280);
+  }
+
+  var tri = findChildByClass(secEl, 'triple', map);
+  if (tri) {
+    b.imageType = 'triple';
+    var tKids = tri.children, tS = ['imgL','imgM','imgR'], tL = ['imgLLink','imgMLink','imgRLink'];
+    for (var k = 0; k < 3 && k < tKids.length; k++) {
+      var im = tKids[k].querySelector('img');
+      if (im) b[tS[k]] = im.getAttribute('src') || '';
+      if (tKids[k].tagName === 'A') b[tL[k]] = tKids[k].getAttribute('href') || '';
+    }
+    b.tripleH = readImgH(tri, 220);
+  }
+
+  var cap = findChildByClass(secEl, 'cap', map);
+  if (cap) b.caption = (cap.textContent || '').trim();
+
+  /* Section with NO heading/text but only images = "imageonly" block */
+  if (!b.heading && !b.text && b.imageType !== 'none') b.type = 'imageonly';
+  return b;
+}
+
+/* ---------- BULLETS ---------- */
+function parseBulletsEl(el, map) {
+  var b = { id: uid(), type: 'bullets', heading: '', intro: '', listStyle: 'bullet', items: [] };
+  var h = el.querySelector(':scope > h2, :scope > h3');
+  if (h) b.heading = (h.textContent || '').trim();
+  var ul = el.querySelector('ul, ol');
+  if (ul) {
+    if (ul.tagName === 'OL') b.listStyle = 'number';
+    else {
+      /* class hint: check-mark variant vs bullet (signature 'ku3gzdg' = check, 'ibjz0ok' = bullet) */
+      var cls = Array.from(ul.classList).join(' ');
+      if (/✓/.test(ul.innerHTML)) b.listStyle = 'check';
+    }
+    Array.from(ul.querySelectorAll(':scope > li')).forEach(function(li){
+      var span = li.querySelector('span') || li;
+      b.items.push((span.textContent || '').trim());
+    });
+  }
+  if (!b.items.length) b.items = [''];
+  return b;
+}
+
+/* ---------- HIGHLIGHT ---------- */
+function parseHighlightEl(el, map) {
+  var b = { id: uid(), type: 'highlight', hlStyle: 'tip', label: '', text: '', hlBorderColor: '#f97316' };
+  /* clone so we can mutate */
+  var clone = el.cloneNode(true);
+  var labelEl = clone.querySelector('span');
+  if (labelEl && hasClass(labelEl, 'hl-label', map)) {
+    b.label = (labelEl.textContent || '').trim();
+    labelEl.remove();
+  }
+  b.text = (clone.textContent || '').trim();
+  /* style sniff: gradient bg => tip/info/warn/note;  italic / quote class => quote */
+  var cls = Array.from(el.classList || []).join(' ');
+  if (/hl-quote/.test(cls) || /font-style:\s*italic/.test(el.getAttribute('style') || '')) b.hlStyle = 'quote';
+  return b;
+}
+
+/* ---------- SHOP CARDS ---------- */
+function parseShopEl(el, map) {
+  var b = { id: uid(), type: 'shop', heading: '', cols: 3, cards: [] };
+  var h = el.querySelector(':scope > h2, :scope > h3');
+  if (h) b.heading = (h.textContent || '').trim();
+
+  /* Detect grid columns by class */
+  var grid = null;
+  Array.from(el.querySelectorAll('*')).some(function(g){
+    if (hasClass(g,'shop-grid-2',map)) { grid = g; b.cols = 2; return true; }
+    if (hasClass(g,'shop-grid-3',map)) { grid = g; b.cols = 3; return true; }
+    if (hasClass(g,'shop-grid-4',map)) { grid = g; b.cols = 4; return true; }
+    return false;
+  });
+  if (!grid) grid = el.querySelector('div'); /* fallback */
+
+  if (grid) {
+    Array.from(grid.children).forEach(function(card){
+      var c = newCard();
+      var img = card.querySelector('img');
+      if (img) c.img = img.getAttribute('src') || '';
+      /* link & button — first <a> that wraps img is the card link; the LAST <a> (with btn class) is the button */
+      var as = card.querySelectorAll('a');
+      if (as.length) c.btnLink = as[as.length - 1].getAttribute('href') || '';
+      /* discount badge */
+      var badge = card.querySelector('span'); /* first span = badge */
+      if (badge && /OFF|%/.test(badge.textContent || '')) c.discount = (badge.textContent || '').replace(/OFF/i,'').trim();
+      /* name = first text-only div */
+      var divs = card.querySelectorAll('div');
+      divs.forEach(function(d){
+        if (!d.querySelector('*') || d.children.length === 0) {
+          if (!c.name) c.name = (d.textContent || '').trim();
+        }
+      });
+      /* price block — div containing currency text */
+      divs.forEach(function(d){
+        var t = (d.textContent || '').trim();
+        if (/[£$€¥]/.test(t) && !c.price) {
+          var cmp = d.querySelector('span');
+          if (cmp) { c.comparePrice = (cmp.textContent || '').trim(); cmp.remove(); }
+          c.price = (d.textContent || '').trim();
+        }
+      });
+      /* button label/style — last <a> */
+      if (as.length) {
+        var btn = as[as.length - 1];
+        c.btnText = (btn.textContent || 'Shop Now').trim();
+        if (hasClass(btn,'btn-outline',map)) c.btnStyle = 'outline';
+        else if (hasClass(btn,'btn-filled',map)) c.btnStyle = 'filled';
+      }
+      b.cards.push(c);
+    });
+  }
+  if (!b.cards.length) b.cards = [newCard()];
+  return b;
+}
+
+/* ---------- FAQ ---------- */
+function parseFaqEl(el, map) {
+  var b = { id: uid(), type: 'faq', heading: '', items: [] };
+  var h = el.querySelector(':scope > h2, :scope > h3');
+  if (h) b.heading = (h.textContent || '').trim();
+  Array.from(el.querySelectorAll('details')).forEach(function(d){
+    var sum = d.querySelector('summary');
+    var ans = d.querySelector('summary + div, summary ~ div');
+    /* strip the +/icon span from summary text */
+    var q = '';
+    if (sum) {
+      var qSpan = sum.querySelector('span');
+      q = (qSpan && qSpan.textContent ? qSpan.textContent : sum.textContent || '').trim();
+      /* remove trailing '+' if present */
+      q = q.replace(/\+\s*$/, '').trim();
+    }
+    var a = ans ? (ans.textContent || '').trim() : '';
+    b.items.push({ q: q, a: a });
+  });
+  if (!b.items.length) b.items = [{ q:'', a:'' }];
+  return b;
+}
+
+/* ---------- TABLE ---------- */
+function parseTableEl(el, map) {
+  var b = { id: uid(), type: 'table', heading: '', hasHeader: true, data: [] };
+  var h = el.querySelector(':scope > h2, :scope > h3');
+  if (h) b.heading = (h.textContent || '').trim();
+  var tbl = el.querySelector('table');
+  if (tbl) {
+    b.hasHeader = !!tbl.querySelector('thead');
+    /* header row */
+    var hr = tbl.querySelector('thead tr');
+    if (hr) {
+      var row = [];
+      Array.from(hr.children).forEach(function(c){ row.push({ v: (c.textContent || '').trim(), cs: parseInt(c.getAttribute('colspan')||'1',10), rs: parseInt(c.getAttribute('rowspan')||'1',10) }); });
+      b.data.push(row);
+    }
+    /* body rows */
+    Array.from(tbl.querySelectorAll('tbody tr')).forEach(function(tr){
+      var row = [];
+      Array.from(tr.children).forEach(function(c){ row.push({ v: (c.textContent || '').trim(), cs: parseInt(c.getAttribute('colspan')||'1',10), rs: parseInt(c.getAttribute('rowspan')||'1',10) }); });
+      b.data.push(row);
+    });
+  }
+  if (!b.data.length) b.data = newTableData(3, 3);
+  return b;
+}
+
+/* ---------- HOTSPOT ---------- */
+function parseHotspotEl(el, map) {
+  var b = { id: uid(), type: 'hotspot', heading: '', imgUrl: '', dotSize: 20, dotColor: '', dotStyle: 'filled', hotspots: [] };
+  var h = el.querySelector(':scope > h2, :scope > h3');
+  if (h) b.heading = (h.textContent || '').trim();
+  var img = el.querySelector('img');
+  if (img) b.imgUrl = img.getAttribute('src') || '';
+  /* pins: <a class="hotspot-pin" style="left:x%;top:y%"> */
+  Array.from(el.querySelectorAll('a')).forEach(function(a){
+    var style = a.getAttribute('style') || '';
+    var lm = style.match(/left:\s*([\d.]+)%/);
+    var tm = style.match(/top:\s*([\d.]+)%/);
+    if (!lm || !tm) return;
+    var hs = newHotspot(b.hotspots.length + 1);
+    hs.x = parseFloat(lm[1]);
+    hs.y = parseFloat(tm[1]);
+    hs.link = a.getAttribute('href') || '';
+    var tip = a.querySelector('div'); /* tooltip wrap */
+    if (tip) {
+      var t = tip.querySelector('div, h3, h4');
+      if (t) hs.label = (t.textContent || '').trim();
+      var d = tip.querySelectorAll('div, p');
+      if (d.length > 1) hs.desc = (d[1].textContent || '').trim();
+    }
+    b.hotspots.push(hs);
+  });
+  if (!b.hotspots.length) b.hotspots = [newHotspot(1)];
+  return b;
+}
+
+/* ---------- CTA ---------- */
+function parseCtaEl(el, map) {
+  var b = { id: uid(), type: 'cta', ctaStyle: 'filled', label: '', desc: '', text: '', link: '', align: 'center' };
+  var styleAttr = el.getAttribute('style') || '';
+  var alM = styleAttr.match(/text-align:\s*(left|center|right)/);
+  if (alM) b.align = alM[1];
+  var lblEl = findChildByClass(el, 'cta-lbl', map);
+  var heading = el.querySelector(':scope > h2, :scope > h3');
+  if (lblEl) b.label = (lblEl.textContent || '').trim();
+  else if (heading) b.label = (heading.textContent || '').trim();
+  var desc = findChildByClass(el, 'cta-desc', map);
+  if (desc) {
+    var lines = [];
+    desc.querySelectorAll('p').forEach(function(p){ lines.push((p.textContent || '').trim()); });
+    b.desc = lines.join('\n');
+  }
+  var aEl = el.querySelector('a');
+  if (aEl) {
+    b.text = (aEl.textContent || '').trim();
+    b.link = aEl.getAttribute('href') || '';
+    if (hasClass(aEl,'btn-outline',map)) b.ctaStyle = 'outline';
+    else if (hasClass(aEl,'btn-filled',map)) b.ctaStyle = 'filled';
+    else b.ctaStyle = 'line';
+  }
+  return b;
+}
+
+/* ---------- IMG + TEXT ---------- */
+function parseImgTxtEl(el, map) {
+  var b = { id: uid(), type: 'imgtxt', heading: '', text: '', imgUrl: '', imgPos: 'right', imgW: 45, imgH: 380, imgHM: 220 };
+  var img = el.querySelector('img');
+  if (img) {
+    b.imgUrl = img.getAttribute('src') || '';
+    var hm = (img.getAttribute('style') || '').match(/height:\s*(\d+)px/);
+    if (hm) b.imgH = parseInt(hm[1],10);
+    /* determine position by DOM order */
+    var content = el.querySelector('div'); /* imgtxt-content */
+    if (img && content && img.compareDocumentPosition(content) & Node.DOCUMENT_POSITION_PRECEDING) b.imgPos = 'right';
+    else b.imgPos = 'left';
+  }
+  var h = el.querySelector('h2, h3');
+  if (h) b.heading = (h.textContent || '').trim();
+  var lines = [];
+  el.querySelectorAll('p').forEach(function(p){ lines.push((p.textContent || '').trim()); });
+  b.text = lines.join('\n');
+  return b;
+}
+
+/* ---------- REVIEW ---------- */
+function parseReviewEl(el, map) {
+  /* If passed a .review-grid, iterate children; if a single .review-block, wrap once */
+  var blocks = [];
+  var items = [];
+  if (Array.from(el.classList || []).some(function(c){return c==='review-grid';})) {
+    Array.from(el.children).forEach(function(rb){ items.push(parseSingleReview(rb)); });
+  } else {
+    items.push(parseSingleReview(el));
+  }
+  return { id: uid(), type: 'review', verifiedLabel: '', items: items.length ? items : [{ name:'',location:'',rating:5,text:'',verified:true,date:'' }] };
+}
+function parseSingleReview(el) {
+  var it = { name:'', location:'', rating:5, text:'', verified:true, date:'' };
+  var stars = el.querySelector('div'); /* first div = stars */
+  if (stars) {
+    var filled = stars.querySelectorAll('.rv-star-filled, [class*="filled"]');
+    if (filled.length) it.rating = filled.length;
+  }
+  var txt = el.querySelector('p');
+  if (txt) it.text = (txt.textContent || '').trim();
+  var meta = el.querySelector('.review-meta, div:last-of-type');
+  if (meta) {
+    var name = meta.querySelector('.review-name, span:first-child');
+    if (name) it.name = (name.textContent || '').trim();
+    var loc  = meta.querySelector('.review-location');
+    if (loc)  it.location = (loc.textContent || '').trim();
+    var date = meta.querySelector('.review-date');
+    if (date) it.date = (date.textContent || '').trim();
+  }
+  return it;
+}
+
+/* ---------- Main entry point ---------- */
+function runImportHTML() {
+  var ta     = document.getElementById('import-ta');
+  var status = document.getElementById('import-status');
+  var raw    = (ta.value || '').trim();
+  status.style.color = '#274b80';
+  if (!raw) { status.textContent = 'Paste HTML first.'; return; }
+
+  try {
+    var map = buildClassMap(raw);
+
+    /* DOMParser sandbox — does not execute scripts. */
+    var doc = new DOMParser().parseFromString(raw, 'text/html');
+
+    /* ---------- Locate article wrapper(s) ----------
+       The exporter may produce MULTIPLE article wrappers when mid-content
+       <style> tags interrupt the original wrapper. We collect ALL of them
+       and walk each one's children in document order so import preserves
+       the original block order.
+
+       Detection strategy (any of these qualifies as a wrapper):
+         1. `<div class="article">`  — literal, un-mangled export
+         2. A class that signature-mapped to 'article'
+         3. ANY <div> whose descendants contain `[data-block-id]` —
+            this is the strongest heuristic and works even when the
+            wrapper's CSS rule didn't get signature-matched.            */
+    var wrappers = [];
+    var pushUniq = function(w){ if (w && wrappers.indexOf(w) === -1) wrappers.push(w); };
+
+    doc.querySelectorAll('.article').forEach(pushUniq);
+    Object.keys(map).forEach(function(k){
+      if (map[k] === 'article') doc.querySelectorAll('.' + k).forEach(pushUniq);
+    });
+    /* Heuristic fallback: any top-level <div> with block-id descendants is a wrapper.
+       This catches the common case where buildDoc() rewrote .article to a mangled
+       class we didn't classify by CSS signature. */
+    if (!wrappers.length) {
+      Array.from(doc.body.children).forEach(function(c){
+        if (c.tagName === 'DIV' && c.querySelector('[data-block-id]')) pushUniq(c);
+      });
+    }
+    /* Absolute last resort: scan body, but skip non-element noise. */
+    if (!wrappers.length) wrappers = [doc.body];
+
+    /* Title / hero / intro side fields (only first occurrence used) */
+    var titleText = null, heroUrl = null, introText = null;
+
+    /* Walk wrappers in document order.
+       We dedupe sections / imageonly blocks by data-block-id, because
+       buildDoc() splits a single section across two wrappers when its
+       per-block media-query <style> tag interrupts the article. We
+       merge the fragments back into one block.                       */
+    var parsed = [];
+    var byId   = {};                                    /* data-block-id -> existing parsed block */
+
+    wrappers.forEach(function(art){
+      Array.from(art.children).forEach(function(child){
+        if (child.nodeType !== 1) return;
+        /* Skip non-content noise — these often sit between wrappers. */
+        if (child.tagName === 'STYLE' || child.tagName === 'SCRIPT' || child.tagName === 'LINK' || child.tagName === 'META') return;
+        var kind = classifyBlock(child, map);
+
+        /* Special handling for the intro paragraph that buildDoc() tags with
+           data-block-id="__details". The parser may not have signature-mapped
+           the intro class, so classify by that attribute too. */
+        var bid = child.getAttribute && child.getAttribute('data-block-id');
+        if (bid === '__details' && child.tagName === 'P') kind = 'intro';
+
+        if (kind === 'title') { if (titleText === null) titleText = (child.textContent || '').trim(); return; }
+        if (kind === 'intro') { if (introText === null) introText = (child.innerHTML || child.textContent || '').replace(/<[^>]+>/g,'').trim(); return; }
+        if (kind === 'hero')  {
+          var hi = child.querySelector('img');
+          if (hi && heroUrl === null) heroUrl = hi.getAttribute('src') || '';
+          return;
+        }
+
+        var b = null;
+        switch (kind) {
+          case 'cta':       b = parseCtaEl(child, map); break;
+          case 'highlight': b = parseHighlightEl(child, map); break;
+          case 'imgtxt':    b = parseImgTxtEl(child, map); break;
+          case 'review':    b = parseReviewEl(child, map); break;
+          case 'faq':       b = parseFaqEl(child, map); break;
+          case 'table':     b = parseTableEl(child, map); break;
+          case 'hotspot':   b = parseHotspotEl(child, map); break;
+          case 'shop':      b = parseShopEl(child, map); break;
+          case 'bullets':   b = parseBulletsEl(child, map); break;
+          case 'section':   b = parseSectionEl(child, map); break;
+        }
+        if (!b) return;
+
+        /* MERGE fragments with same data-block-id (sections / imageonly only). */
+        if (bid && byId[bid] && (b.type === 'section' || b.type === 'imageonly')) {
+          var ex = byId[bid];
+          if (!ex.heading  && b.heading)  ex.heading  = b.heading;
+          if (!ex.text     && b.text)     ex.text     = b.text;
+          if (!ex.caption  && b.caption)  ex.caption  = b.caption;
+          if (ex.imageType === 'none' && b.imageType !== 'none') {
+            ex.imageType = b.imageType;
+            ex.imgUrl  = b.imgUrl;  ex.imgLink  = b.imgLink;
+            ex.imgL    = b.imgL;    ex.imgLLink = b.imgLLink;
+            ex.imgM    = b.imgM;    ex.imgMLink = b.imgMLink;
+            ex.imgR    = b.imgR;    ex.imgRLink = b.imgRLink;
+            ex.imgW    = b.imgW;    ex.imgH     = b.imgH;
+            ex.pairH   = b.pairH;   ex.tripleH  = b.tripleH;
+          }
+          /* If existing was 'imageonly' but now has heading/text, upgrade to 'section'. */
+          if (ex.type === 'imageonly' && (ex.heading || ex.text)) ex.type = 'section';
+          return;
+        }
+        if (bid) byId[bid] = b;
+        parsed.push(b);
+      });
+    });
+
+    if (!parsed.length && titleText === null && heroUrl === null && introText === null) {
+      status.textContent = 'No recognizable blocks found in pasted HTML.'; return;
+    }
+
+    /* Apply: replace or append based on checkbox. */
+    var replace = document.getElementById('import-replace').checked;
+    if (replace) blocks.length = 0;
+    parsed.forEach(function(b){ blocks.push(b); });
+
+    /* Restore top-level fields if found and the user chose replace. */
+    if (replace) {
+      if (titleText !== null) { var tEl = document.getElementById('f-title'); if (tEl) tEl.value = titleText; }
+      if (heroUrl   !== null) { var hEl = document.getElementById('f-hero');  if (hEl) hEl.value = heroUrl; }
+      if (introText !== null) { var iEl = document.getElementById('f-intro'); if (iEl) iEl.value = introText; }
+    }
+
+    renderBlocks();
+    go();
+
+    /* Build summary line per type */
+    var counts = {};
+    parsed.forEach(function(b){ counts[b.type] = (counts[b.type] || 0) + 1; });
+    var summary = Object.keys(counts).map(function(k){ return counts[k] + ' ' + k; }).join(', ');
+    status.textContent = 'Imported ' + parsed.length + ' block(s): ' + summary + '.';
+    setTimeout(closeImportModal, 1400);
+  } catch (e) {
+    status.style.color = '#c00';
+    status.textContent = 'Parse error: ' + (e.message || e);
+  }
+}
+/* ================ END IMPORT HTML ================ */
 
 
       function getBl(id) {
