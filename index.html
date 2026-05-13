@@ -7590,7 +7590,8 @@ w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
           "px;}}@media(max-width:480px){.article{padding:20px 14px 50px;}.title{font-size:clamp(22px,8vw,36px);}.hero{height:clamp(160px,52vw,240px);}.sh,.shop-heading,.faq-heading,.table-heading,.hotspot-heading,.bullets-heading{font-size:clamp(16px,5.5vw,26px);}.sb{font-size:14px;line-height:1.75;}.intro{font-size:15px;}.shop-grid-2{grid-template-columns:1fr;gap:16px;}.shop-grid-3{grid-template-columns:repeat(2,1fr);gap:14px;}.shop-grid-4{grid-template-columns:repeat(2,1fr);gap:10px;}.shop-card-img{height:140px;object-fit:cover;aspect-ratio:unset;}.shop-grid-4 .shop-card-name{font-size:11px;}.shop-grid-4 .shop-card-price{font-size:11px;}.faq-item summary{font-size:14px;padding:15px 2px;}.hl-box{padding:16px 18px;border-radius:8px;}.review-grid{grid-template-columns:1fr;}.review-block{padding:20px 18px;}}"
         );
       }
-      function buildBody() {
+function buildBody() {
+        _inlineStylesCollector = [];
         syncSectionBlocks();
 var title = document.getElementById("f-title").value.trim(),
   heroUrl = document.getElementById("f-hero").value.trim(),
@@ -7641,7 +7642,7 @@ var title = document.getElementById("f-title").value.trim(),
             }
             if (b.imageType === "pair") {
               var pairMH = b.pairHM || 160;
-              h += '<style>@media(max-width:768px){#pair-' + b.id + ' img{height:' + pairMH + 'px !important;}}</style>';
+              _inlineStylesCollector.push('<style>@media(max-width:768px){#pair-' + b.id + ' img{height:' + pairMH + 'px !important;}}</style>');
               var pairStyle = "width:100%;height:" + (b.pairH || 280) + "px;object-fit:cover;display:block;";
               h += '<div id="pair-' + b.id + '" class="pair">\n';
               if (b.imgL) {
@@ -7661,7 +7662,7 @@ var title = document.getElementById("f-title").value.trim(),
             }
             if (b.imageType === "triple") {
               var triMH = b.tripleHM || 140;
-              h += '<style>@media(max-width:768px){#tri-' + b.id + ' img{height:' + triMH + 'px !important;}#tri-' + b.id + ' .triple-item:nth-child(3):last-child img{height:' + triMH + 'px !important;}}</style>';
+              _inlineStylesCollector.push('<style>@media(max-width:768px){#tri-' + b.id + ' img{height:' + triMH + 'px !important;}#tri-' + b.id + ' .triple-item:nth-child(3):last-child img{height:' + triMH + 'px !important;}}</style>');
               var triStyle = "width:100%;height:" + (b.tripleH || 220) + "px;object-fit:cover;display:block;";
               h += '<div id="tri-' + b.id + '" class="triple">\n';
               if (b.imgL) {
@@ -7951,7 +7952,6 @@ h += '<div class="review-stars">' + stars + "</div>\n";
            if (useGrid) h += "</div>\n";
           }
         });
-        h = _inlineStyles.join('') + h;
         return h;
       }
 
@@ -8130,14 +8130,16 @@ var scrollBtn =
   'update();' +
   '})();<\/script>';
 
+var _previewBody = buildBody();
+var _extraCSS = _inlineStylesCollector.map(function(s){ return s.replace(/<\/?style[^>]*>/g,''); }).join('');
 return (
-  '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>' +
-  buildCSS(s) +
+  '<!DOCTYPE html><html><head><meta charset="UTF-8">...<style>' +
+  buildCSS(s) + _extraCSS +
   "</style>" +
   buildFaqSchema() +
   cs +
   "</head><body>" +
-  (hasContent ? '<div class="article">' + buildBody() + "</div>" : empty) +
+  (hasContent ? '<div class="article">' + _previewBody + "</div>" : empty) +
   scrollBtn +
   "</body></html>"
 );
@@ -8284,13 +8286,14 @@ return (
         var cm = genCM();
         var s = getSt(),
           title = document.getElementById("f-title").value.trim();
-        var css = rxCSScls(buildCSS(s), cm);
-        var body = rxHTMLcls(buildBody(), cm);
+var body = rxHTMLcls(buildBody(), cm);
+var _extraCSS = _inlineStylesCollector.map(function(s){ return s.replace(/<\/?style[^>]*>/g,''); }).join('');
+var css = rxCSScls(buildCSS(s), cm);
         /* scope ALL css under the article wrapper so nothing leaks to the host page */
         var articleClass = "." + cm["article"];
         var scopedCss = scopeCSS(css, articleClass);
         var faqSchema = buildFaqSchema();
-        var out = faqSchema + "<style>\n" + scopedCss + '\n</style>\n<div class="' + cm["article"] + '">\n' + body + "\n</div>";
+       var out = faqSchema + "<style>\n" + scopedCss + '\n' + _extraCSS + '\n</style>\n<div class="' + cm["article"] + '">\n' + body + "\n</div>";
         /* Shopify pipes article.content through newline_to_br, turning every
            stray \n into a phantom <br>. Strip ALL newlines from the body
            portion (preserving them inside <style> and <script> blocks where
