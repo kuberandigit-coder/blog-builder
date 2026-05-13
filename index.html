@@ -7641,7 +7641,7 @@ var title = document.getElementById("f-title").value.trim(),
             }
             if (b.imageType === "pair") {
               var pairMH = b.pairHM || 160;
-              h += '<style>@media(max-width:768px){#pair-' + b.id + ' img{height:' + pairMH + 'px !important;}}</style>\n';
+              h += '<style>@media(max-width:768px){#pair-' + b.id + ' img{height:' + pairMH + 'px !important;}}</style>';
               var pairStyle = "width:100%;height:" + (b.pairH || 280) + "px;object-fit:cover;display:block;";
               h += '<div id="pair-' + b.id + '" class="pair">\n';
               if (b.imgL) {
@@ -7661,7 +7661,7 @@ var title = document.getElementById("f-title").value.trim(),
             }
             if (b.imageType === "triple") {
               var triMH = b.tripleHM || 140;
-              h += '<style>@media(max-width:768px){#tri-' + b.id + ' img{height:' + triMH + 'px !important;}#tri-' + b.id + ' .triple-item:nth-child(3):last-child img{height:' + triMH + 'px !important;}}</style>\n';
+              h += '<style>@media(max-width:768px){#tri-' + b.id + ' img{height:' + triMH + 'px !important;}#tri-' + b.id + ' .triple-item:nth-child(3):last-child img{height:' + triMH + 'px !important;}}</style>';
               var triStyle = "width:100%;height:" + (b.tripleH || 220) + "px;object-fit:cover;display:block;";
               h += '<div id="tri-' + b.id + '" class="triple">\n';
               if (b.imgL) {
@@ -7873,7 +7873,7 @@ var title = document.getElementById("f-title").value.trim(),
     h += "</div>\n";
   } else if (b.imageType === "pair" && (b.imgL || b.imgR)) {
     var pairMH = b.pairHM || 160;
-    h += '<style>@media(max-width:768px){#pair-' + b.id + ' img{height:' + pairMH + 'px !important;}}</style>\n';
+    h += '<style>@media(max-width:768px){#pair-' + b.id + ' img{height:' + pairMH + 'px !important;}}</style>';
     var pairStyle = "width:100%;height:" + (b.pairH||280) + "px;object-fit:cover;display:block;";
     h += '<div class="section" data-block-id="' + b.id + '">\n';
     h += '<div id="pair-' + b.id + '" class="pair">\n';
@@ -7913,7 +7913,7 @@ var title = document.getElementById("f-title").value.trim(),
               h += '<img class="imgtxt-img" src="' + ea(b.imgUrl) + '" alt="' + ea(b.imgAlt || b.heading || "") + '" loading="lazy" style="width:' + imgW + '%;height:' + imgH + 'px;">\n';
             }
             h += '<div class="imgtxt-content">\n';
-          if ((b.heading || '').trim()) h += '<h2 class="sh">' + parseContent(b.heading) + '</h2>\n';
+          if ((b.heading || '').trim()) h += '<h2 class="sh">' + parseContent(b.heading) + "</h2>";
             if ((b.subheading || '').trim()) h += '<h3 class="imgtxt-subheading">' + parseContent(b.subheading) + '</h3>\n';
             if ((b.text || '').trim()) {
               h += '<div class="sb">\n';
@@ -7951,7 +7951,7 @@ h += '<div class="review-stars">' + stars + "</div>\n";
            if (useGrid) h += "</div>\n";
           }
         });
-        h = _inlineStyles.join('\n') + h;
+        h = _inlineStyles.join('') + h;
         return h;
       }
 
