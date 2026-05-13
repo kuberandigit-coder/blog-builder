@@ -4824,9 +4824,23 @@ function parseShopEl(el, map) {
         }
       }
 
-      /* Description: only extract if a dedicated .shop-card-desc exists. */
+      /* Description: only accept if it's a genuine leaf element — it must
+         NOT contain the name or price elements (otherwise the match is on
+         a wrapper class whose textContent is everything in the card).
+         Also reject if the desc text already contains the name text — that
+         means the same long string is being captured twice. */
       var descEl = findByClass(card, 'shop-card-desc');
-      if (descEl) c.desc = (descEl.textContent || '').trim();
+      if (descEl) {
+        var containsOther = (nameEl && descEl.contains(nameEl)) || (priceEl && descEl.contains(priceEl));
+        var descTxt = (descEl.textContent || '').trim();
+        var nameTxt = c.name || '';
+        if (!containsOther && nameTxt && descTxt.indexOf(nameTxt) === -1) {
+          c.desc = descTxt;
+        } else if (!containsOther && !nameTxt) {
+          c.desc = descTxt;
+        }
+        /* otherwise: leave c.desc as "" — the source had no real description. */
+      }
 
       /* Discount badge — first <span> in the card whose text matches "% / OFF". */
       var spans = card.querySelectorAll('span');
