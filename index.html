@@ -3232,9 +3232,17 @@
         </div>
         <div id="left-scroll">
           <div class="epane on" id="ep-content">
+            <!-- Blog Details: collapsible. Closed by default so the panel
+                 doesn't take vertical space when the user hasn't set a title /
+                 hero / intro yet. Click the header to toggle. -->
             <div class="card" id="details-card">
-              <div class="clabel">Blog Details</div>
-              <div class="fgroup">
+              <button type="button" class="clabel details-toggle" id="details-toggle"
+                      onclick="toggleDetailsCard()"
+                      style="width:100%;text-align:left;background:#f7f8fb;border:1px solid #d8dde6;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:600;font-family:inherit;font-size:13px;color:#274b80;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                <span>&#128221; Blog Details <span style="opacity:.65;font-weight:400;font-size:11px;margin-left:6px;">(title, hero, intro)</span></span>
+                <span id="details-chevron" style="transition:transform .2s;display:inline-block;">&#9656;</span>
+              </button>
+              <div class="fgroup" id="details-fgroup" style="display:none;margin-top:10px;">
                 <input type="text" id="f-title" placeholder="Blog title" oninput="go()" />
                 <input
                   type="url"
@@ -3740,9 +3748,9 @@
                   ><input
                     type="range"
                     id="s-pp"
-                    min="20"
+                    min="0"
                     max="120"
-                    value="56"
+                    value="20"
                     oninput="
                       sv('v-pp', this.value, 'px');
                       go();
@@ -4462,6 +4470,18 @@ function closeInsertMenu() {
 function openImportModal()  { document.getElementById('import-modal').style.display = 'flex'; }
 function closeImportModal() { document.getElementById('import-modal').style.display = 'none'; document.getElementById('import-status').textContent = ''; }
 
+/* Toggle the Blog Details panel (collapsed by default). Auto-opens when a
+   field is populated via import so the user can see the inserted content. */
+function toggleDetailsCard(forceOpen) {
+  var grp = document.getElementById('details-fgroup');
+  var chev = document.getElementById('details-chevron');
+  if (!grp) return;
+  var isOpen = grp.style.display !== 'none';
+  var nextOpen = (forceOpen === true) ? true : (forceOpen === false ? false : !isOpen);
+  grp.style.display = nextOpen ? '' : 'none';
+  if (chev) chev.style.transform = nextOpen ? 'rotate(90deg)' : 'rotate(0deg)';
+}
+
 /* Build mangled->original class map by reading the embedded <style>.
    genCM() emits rules like ".originalName{...}" rewritten to ".xx{...}",
    but the generator also keeps a class-mapping comment header. To be
@@ -5090,6 +5110,8 @@ function runImportHTML() {
       if (titleText !== null) { var tEl = document.getElementById('f-title'); if (tEl) tEl.value = titleText; }
       if (heroUrl   !== null) { var hEl = document.getElementById('f-hero');  if (hEl) hEl.value = heroUrl; }
       if (introText !== null) { var iEl = document.getElementById('f-intro'); if (iEl) iEl.value = introText; }
+      /* Auto-open the Blog Details panel only if at least one field got data. */
+      if (titleText !== null || heroUrl !== null || introText !== null) toggleDetailsCard(true);
     }
 
     renderBlocks();
@@ -7317,7 +7339,7 @@ w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
           is: gi("s-is") || 18,
           lh: gf("s-lh") || 1.88,
           sg: gi("s-sg") || 56,
-          pp: gi("s-pp") || 56,
+          pp: gi("s-pp") || 20,
         };
       }
       function buildCSS(s) {
@@ -8701,7 +8723,7 @@ function scheduleAutoSave() {
           "s-is": 18,
           "s-lh": 1.88,
           "s-sg": 56,
-          "s-pp": 56,
+          "s-pp": 20,
         };
         var dc = {
           "c-pbg": "#ffffff",
