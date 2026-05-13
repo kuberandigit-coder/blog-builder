@@ -4531,6 +4531,12 @@ function buildClassMap(htmlStr) {
     else if (/background:\s*#111111[^}]*color:\s*#ffffff[^}]*padding:\s*15px\s+42px/.test(body)) set(name,'btn-filled');
     else if (/border:1\.5px solid #111111[^}]*padding:\s*14px\s+42px/.test(body)) set(name,'btn-outline');
     else if (/^\s*font-weight:\s*700;\s*margin-right:\s*6px;?\s*$/.test(body)) set(name,'hl-label');
+    /* Shop card sub-parts — uniquely identifiable so we can target them
+       precisely instead of guessing by "first text-only div". */
+    else if (/font-weight:\s*600[^}]*line-height:\s*1\.3[^}]*margin-bottom:\s*5px/.test(body)) set(name,'shop-card-name');
+    else if (/font-weight:\s*700[^}]*margin-bottom:\s*9px[^}]*display:\s*flex/.test(body)) set(name,'shop-card-price');
+    else if (/font-size:\s*13px[^}]*line-height:\s*1\.55[^}]*margin-bottom:\s*16px/.test(body)) set(name,'shop-card-desc');
+    else if (/text-decoration:\s*line-through/.test(body)) set(name,'shop-card-compare');
   }
 
   /* ---------- Pass 2: compound-selector rules ---------- */
@@ -4780,37 +4786,63 @@ function parseShopEl(el, map) {
   });
   if (!grid) grid = el.querySelector('div'); /* fallback */
 
+  /* Helper: find a descendant by un-mangled class name. */
+  function findByClass(root, className) {
+    if (!root || !root.querySelectorAll) return null;
+    var all = root.querySelectorAll('*');
+    for (var i = 0; i < all.length; i++) if (hasClass(all[i], className, map)) return all[i];
+    return null;
+  }
+
   if (grid) {
     Array.from(grid.children).forEach(function(card){
       var c = newCard();
+
+      /* Image — first <img> in the card. */
       var img = card.querySelector('img');
       if (img) c.img = img.getAttribute('src') || '';
-      /* link & button — first <a> that wraps img is the card link; the LAST <a> (with btn class) is the button */
+
+      /* Name: look up the precise .shop-card-name element. Never use a body
+         wrapper — that would slurp price/button text into the name. */
+      var nameEl = findByClass(card, 'shop-card-name');
+      if (nameEl) c.name = (nameEl.textContent || '').trim();
+
+      /* Price block: read children directly so compare-price <span> is split out. */
+      var priceEl = findByClass(card, 'shop-card-price');
+      if (priceEl) {
+        /* The compare-price span (line-through) is the OLD price. */
+        var cmp = priceEl.querySelector('span');
+        if (cmp && hasClass(cmp, 'shop-card-compare', map)) {
+          c.comparePrice = (cmp.textContent || '').trim();
+          /* Build c.price from priceEl's text WITHOUT the compare span. */
+          var clone = priceEl.cloneNode(true);
+          var cmpInClone = clone.querySelector('span');
+          if (cmpInClone) cmpInClone.remove();
+          c.price = (clone.textContent || '').trim();
+        } else {
+          c.price = (priceEl.textContent || '').trim();
+        }
+      }
+
+      /* Description: only extract if a dedicated .shop-card-desc exists. */
+      var descEl = findByClass(card, 'shop-card-desc');
+      if (descEl) c.desc = (descEl.textContent || '').trim();
+
+      /* Discount badge — first <span> in the card whose text matches "% / OFF". */
+      var spans = card.querySelectorAll('span');
+      for (var sI = 0; sI < spans.length; sI++) {
+        var sT = (spans[sI].textContent || '').trim();
+        /* skip compare-price spans */
+        if (hasClass(spans[sI], 'shop-card-compare', map)) continue;
+        if (/OFF|%/.test(sT)) { c.discount = sT.replace(/OFF/i,'').trim(); break; }
+      }
+
+      /* Button: the LAST <a> in the card (after image links etc). */
       var as = card.querySelectorAll('a');
-      if (as.length) c.btnLink = as[as.length - 1].getAttribute('href') || '';
-      /* discount badge */
-      var badge = card.querySelector('span'); /* first span = badge */
-      if (badge && /OFF|%/.test(badge.textContent || '')) c.discount = (badge.textContent || '').replace(/OFF/i,'').trim();
-      /* name = first text-only div */
-      var divs = card.querySelectorAll('div');
-      divs.forEach(function(d){
-        if (!d.querySelector('*') || d.children.length === 0) {
-          if (!c.name) c.name = (d.textContent || '').trim();
-        }
-      });
-      /* price block — div containing currency text */
-      divs.forEach(function(d){
-        var t = (d.textContent || '').trim();
-        if (/[£$€¥]/.test(t) && !c.price) {
-          var cmp = d.querySelector('span');
-          if (cmp) { c.comparePrice = (cmp.textContent || '').trim(); cmp.remove(); }
-          c.price = (d.textContent || '').trim();
-        }
-      });
-      /* button label/style — last <a> */
       if (as.length) {
         var btn = as[as.length - 1];
         c.btnText = (btn.textContent || 'Shop Now').trim();
+        c.btnLink = btn.getAttribute('href') || '';
         if (hasClass(btn,'btn-outline',map)) c.btnStyle = 'outline';
         else if (hasClass(btn,'btn-filled',map)) c.btnStyle = 'filled';
       }
