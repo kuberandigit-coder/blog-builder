@@ -1860,10 +1860,12 @@
         background: #ece9e5;
         font-weight: 600;
       }
+      /* Table editor — LIGHT theme. Was dark; switched so the toolbar
+         buttons (Delete Row/Col, Insert Link) are clearly visible. */
       #tbl-editor-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(5, 10, 25, 0.92);
+        background: rgba(20, 30, 50, 0.45);
         z-index: 900;
         display: none;
         align-items: center;
@@ -1873,21 +1875,21 @@
         display: flex;
       }
       #tbl-editor-panel {
-        background: #0a1628;
-        border: 2px solid #1a2f5e;
+        background: #ffffff;
+        border: 1px solid #d8dde6;
         border-radius: 14px;
         width: 92vw;
         max-width: 1200px;
         max-height: 90vh;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.18);
         overflow: hidden;
       }
       #tbl-editor-head {
         padding: 14px 18px;
-        background: #0d1b3e;
-        border-bottom: 1px solid #1a2f5e;
+        background: #f7f8fb;
+        border-bottom: 1px solid #e2e6ee;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -1897,7 +1899,7 @@
         font-family: "Cormorant Garamond", serif;
         font-size: 20px;
         font-weight: 700;
-        color: #e8edf8;
+        color: #1f2a44;
       }
       #tbl-editor-acts {
         display: flex;
@@ -1906,7 +1908,7 @@
       }
       .te-btn {
         padding: 7px 14px;
-        border: none;
+        border: 1px solid transparent;
         border-radius: 6px;
         cursor: pointer;
         font-family: "Jost", sans-serif;
@@ -1916,37 +1918,47 @@
         text-transform: uppercase;
         transition: all 0.15s;
         white-space: nowrap;
+        background: #eef2f7;
+        color: #1f2a44;
+        border-color: #d0d8e8;
       }
+      .te-btn:hover { background: #dbe4f0; }
+      .te-btn.danger {
+        background: #fce6e6 !important;
+        color: #8a2020 !important;
+        border-color: #e8b8b8 !important;
+      }
+      .te-btn.danger:hover { background: #f7d0d0 !important; }
       #tbl-merge-btn {
-        background: #1e4080;
-        color: #c5d8f5;
-        border: 1px solid #2a5aaa;
+        background: #e3edfb;
+        color: #1e4080;
+        border: 1px solid #b9cdef;
       }
-      #tbl-merge-btn:hover {
-        background: #2a5aaa;
-      }
+      #tbl-merge-btn:hover { background: #cfdef7; }
       #tbl-split-btn {
-        background: #5a1010;
-        color: #f08080;
-        border: 1px solid #8a2020;
+        background: #fce6e6;
+        color: #8a2020;
+        border: 1px solid #e8b8b8;
       }
-      #tbl-split-btn:hover {
-        background: #8a2020;
+      #tbl-split-btn:hover { background: #f7d0d0; }
+      #tbl-link-btn {
+        background: #e3f3e8 !important;
+        color: #1a4e2a !important;
+        border-color: #b8d8c0 !important;
       }
+      #tbl-link-btn:hover { background: #cfead8 !important; }
       #tbl-done-btn {
-        background: #1a6e3a;
-        color: #c5f0d5;
-        border: 1px solid #2a9e5a;
+        background: #1a8e4a !important;
+        color: #ffffff !important;
+        border: 1px solid #1a6e3a !important;
       }
-      #tbl-done-btn:hover {
-        background: #228844;
-      }
+      #tbl-done-btn:hover { background: #228844 !important; }
       #tbl-editor-hint {
         padding: 7px 18px;
         font-size: 11px;
-        color: #4a6899;
-        background: #091525;
-        border-bottom: 1px solid #0f2040;
+        color: #6b7892;
+        background: #f7f8fb;
+        border-bottom: 1px solid #e2e6ee;
         flex-shrink: 0;
         letter-spacing: 0.03em;
       }
@@ -1960,52 +1972,59 @@
         height: 6px;
       }
       #tbl-editor-body::-webkit-scrollbar-thumb {
-        background: #2a4070;
+        background: #c8d0dd;
         border-radius: 3px;
       }
+      /* Center the table within the editor body, regardless of column count.
+         When more columns are added, the inline-block expands and stays centered. */
+      #tbl-editor-body { text-align: center; }
       #tbl-editor-table-wrap {
         display: inline-block;
-        min-width: 100%;
+        margin: 0 auto;
+        text-align: left;
       }
       .tbl-et {
         border-collapse: collapse;
         user-select: none;
+        margin: 0 auto;
       }
       .tbl-et td {
-        border: 2px solid #2a4070;
-        min-width: 100px;
+        border: 1.5px solid #3a4a66;
+        min-width: 110px;
         vertical-align: middle;
         cursor: cell;
-        background: #0d1b3e;
-        transition:
-          background 0.08s,
-          border-color 0.08s;
+        background: #ffffff;
+        transition: background 0.08s, border-color 0.08s;
         position: relative;
         outline: none;
-        padding: 9px 12px;
-        font-size: 13px;
+        padding: 10px 14px;
+        font-size: 14px;
         font-family: "Jost", sans-serif;
-        color: #c5d8f5;
+        color: #0d1424;
+        font-weight: 500;
         white-space: pre-wrap;
         word-break: break-word;
       }
       .tbl-et td.te-head {
-        background: #1a2f5e;
+        background: #d8e1ee;
         font-weight: 700;
-        color: #e8edf8;
+        color: #0d1424;
+        border-color: #2a3550;
       }
       .tbl-et td.te-sel {
-        background: #1a3a6e !important;
+        background: #dbe9f7 !important;
         border-color: #5a90d0 !important;
       }
       .tbl-et td:focus {
         border-color: #5a90d0;
-        background: #152a55;
+        background: #eef6ff;
       }
+      /* table cell inline links — keep visible in the editor */
+      .tbl-et td a { color: #1a5aaa; text-decoration: underline; }
       #tbl-editor-footer {
         padding: 10px 18px;
-        background: #091525;
-        border-top: 1px solid #1a2f5e;
+        background: #f7f8fb;
+        border-top: 1px solid #e2e6ee;
         display: flex;
         gap: 8px;
         align-items: center;
@@ -2014,29 +2033,29 @@
       }
       .te-foot-btn {
         padding: 6px 14px;
-        border: 1px solid #2a4070;
+        border: 1px solid #d0d8e8;
         border-radius: 5px;
-        background: #0d1b3e;
+        background: #ffffff;
         cursor: pointer;
         font-size: 11px;
         font-family: "Jost", sans-serif;
-        color: #7a9fd4;
+        color: #1f2a44;
         font-weight: 600;
         transition: all 0.15s;
         white-space: nowrap;
       }
       .te-foot-btn:hover {
-        background: #1a2f5e;
-        color: #c5d8f5;
+        background: #eef2f7;
+        color: #0f1a30;
       }
       .te-foot-btn.on {
-        background: #1a3a6e;
-        color: #c5d8f5;
-        border-color: #2a5aaa;
+        background: #dbe9f7;
+        color: #1f2a44;
+        border-color: #5a90d0;
       }
       .te-foot-btn.danger {
-        border-color: #5a2020;
-        color: #c05050;
+        border-color: #e8b8b8;
+        color: #8a2020;
       }
       .te-foot-btn.paste-btn {
         border-color: #2a6a4a;
@@ -2044,10 +2063,11 @@
         margin-left: auto;
       }
       /* PASTE TABLE OVERLAY */
+      /* Bulk Paste popup — LIGHT theme to match the table editor. */
       #tbl-paste-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(5,10,25,0.92);
+        background: rgba(20, 30, 50, 0.45);
         z-index: 1000;
         display: none;
         align-items: center;
@@ -2055,27 +2075,28 @@
       }
       #tbl-paste-overlay.show { display: flex; }
       #tbl-paste-panel {
-        background: #0d1b3e;
-        border: 1px solid #2a4070;
+        background: #ffffff;
+        border: 1px solid #d8dde6;
         border-radius: 12px;
         padding: 24px;
         width: min(560px, 94vw);
         display: flex;
         flex-direction: column;
         gap: 12px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.2);
       }
       #tbl-paste-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
       }
-      #tbl-paste-head h3 { color: #c5d8f5; margin: 0; font-size: 16px; }
-      .tbl-paste-hint { color: #7a9fd4; font-size: 13px; margin: 0; }
+      #tbl-paste-head h3 { color: #1f2a44; margin: 0; font-size: 16px; }
+      .tbl-paste-hint { color: #5a6680; font-size: 13px; margin: 0; }
       #tbl-paste-input {
-        background: #091525;
-        border: 1px solid #2a4070;
+        background: #ffffff;
+        border: 1px solid #d0d8e8;
         border-radius: 7px;
-        color: #c5d8f5;
+        color: #0d1424;
         font-family: monospace;
         font-size: 13px;
         padding: 10px 12px;
@@ -2084,9 +2105,9 @@
         width: 100%;
         box-sizing: border-box;
       }
-      #tbl-paste-input:focus { border-color: #5a90d0; outline: none; }
+      #tbl-paste-input:focus { border-color: #5a90d0; outline: none; box-shadow: 0 0 0 3px rgba(90,144,208,0.18); }
       .tbl-paste-opts { display: flex; gap: 20px; }
-      .tbl-paste-opts label { color: #7a9fd4; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+      .tbl-paste-opts label { color: #1f2a44; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
       .tbl-paste-btns { display: flex; gap: 10px; }
       .te-foot-btn.danger:hover {
         background: #3a1010;
@@ -3040,6 +3061,18 @@
             <button class="te-btn danger" id="tbl-del-col-btn" onclick="tblDeleteSelCols()" style="display: none; background:#5a2020;">
               &#128465; Delete Column(s)
             </button>
+            <!-- Insert link inside the currently-selected text within a cell.
+                 mousedown captures the selection BEFORE focus moves to the button. -->
+            <button class="te-btn" id="tbl-link-btn"
+                    onmousedown="_tblCaptureCellSelection(event)"
+                    onclick="tblInsertCellLink()"
+                    title="Select text inside a cell, then click to wrap it in a link"
+                    style="background:#1a4e2a;">&#128279; Insert Link</button>
+            <!-- Cancel: discard edits made in this session AND remove the block
+                 entirely if it was just added (so users can back out of an
+                 unwanted table). Done = keep changes. -->
+            <button class="te-btn" id="tbl-cancel-btn" onclick="cancelTableEditor()"
+                    style="background:#eef2f7;color:#1f2a44;border-color:#d0d8e8;">&#10005; Cancel</button>
             <button class="te-btn" id="tbl-done-btn" onclick="closeTableEditor()">&#10003; Done</button>
           </div>
         </div>
@@ -3048,7 +3081,7 @@
           Merge &nbsp;&#8226;&nbsp; Click a merged cell then Split to unmerge
         </div>
         <div id="tbl-editor-body">
-          <input type="text" id="tbl-editor-heading" placeholder="Table heading (optional)" style="width:100%;padding:10px 14px;margin-bottom:14px;font-size:18px;font-weight:600;background:#1a1a1a;color:#fff;border:1px solid #333;border-radius:6px;" oninput="onTblEditorHeading(this.value)">
+          <input type="text" id="tbl-editor-heading" placeholder="Table heading (optional)" style="width:100%;padding:10px 14px;margin-bottom:14px;font-size:18px;font-weight:600;background:#ffffff;color:#1f2a44;border:1px solid #d0d8e8;border-radius:6px;" oninput="onTblEditorHeading(this.value)">
           <div id="tbl-editor-table-wrap"></div>
         </div>
         <div id="tbl-editor-footer">
@@ -3074,8 +3107,8 @@
           <label><input type="checkbox" id="tbl-paste-replace" checked> Replace existing table</label>
         </div>
         <div class="tbl-paste-btns">
-          <button class="te-btn" onclick="applyTblPaste()">&#10003; Apply</button>
-          <button class="te-btn" style="background:#2a3550;" onclick="closeTblPaste()">Cancel</button>
+          <button class="te-btn" style="background:#1a8e4a;color:#fff;border-color:#1a6e3a;" onclick="applyTblPaste()">&#10003; Apply</button>
+          <button class="te-btn" style="background:#eef2f7;color:#1f2a44;border-color:#d0d8e8;" onclick="closeTblPaste()">Cancel</button>
         </div>
       </div>
     </div>
@@ -4087,8 +4120,10 @@
             i += mc[0].length;
             continue;
           }
-          /* link [text](url) */
-          var ml = s.slice(i).match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/);
+          /* link [text](url)  — accepts absolute URLs (https://…), protocol-
+             relative (//cdn…), and relative paths (/collections/x) so users
+             can build internal links to their own store. */
+          var ml = s.slice(i).match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/\/[^\s)]+|\/[^\s)]*)\)/);
           if (ml) {
             out += '<a href="' + ea(ml[2]) + '" class="inline-link">' + eh(ml[1]) + "</a>";
             i += ml[0].length;
@@ -4933,17 +4968,31 @@ function parseTableEl(el, map) {
   var tbl = el.querySelector('table');
   if (tbl) {
     b.hasHeader = !!tbl.querySelector('thead');
+    /* Convert a cell element's inner HTML back into the editor's markdown
+       format: `<a href="X">Y</a>` → `[Y](X)`, then strip remaining tags. */
+    function cellToMarkdown(el) {
+      if (!el) return '';
+      var clone = el.cloneNode(true);
+      Array.from(clone.querySelectorAll('a')).forEach(function(a){
+        var href = a.getAttribute('href') || '';
+        var txt  = (a.textContent || '').trim();
+        var md = document.createTextNode('[' + txt + '](' + href + ')');
+        a.parentNode.replaceChild(md, a);
+      });
+      /* Drop any other tags (spans etc.) but keep their text. */
+      return (clone.textContent || '').trim();
+    }
     /* header row */
     var hr = tbl.querySelector('thead tr');
     if (hr) {
       var row = [];
-      Array.from(hr.children).forEach(function(c){ row.push({ v: (c.textContent || '').trim(), cs: parseInt(c.getAttribute('colspan')||'1',10), rs: parseInt(c.getAttribute('rowspan')||'1',10) }); });
+      Array.from(hr.children).forEach(function(c){ row.push({ v: cellToMarkdown(c), cs: parseInt(c.getAttribute('colspan')||'1',10), rs: parseInt(c.getAttribute('rowspan')||'1',10) }); });
       b.data.push(row);
     }
     /* body rows */
     Array.from(tbl.querySelectorAll('tbody tr')).forEach(function(tr){
       var row = [];
-      Array.from(tr.children).forEach(function(c){ row.push({ v: (c.textContent || '').trim(), cs: parseInt(c.getAttribute('colspan')||'1',10), rs: parseInt(c.getAttribute('rowspan')||'1',10) }); });
+      Array.from(tr.children).forEach(function(c){ row.push({ v: cellToMarkdown(c), cs: parseInt(c.getAttribute('colspan')||'1',10), rs: parseInt(c.getAttribute('rowspan')||'1',10) }); });
       b.data.push(row);
     });
   }
@@ -5832,7 +5881,8 @@ if (gm("product:price:amount")) {
       }
 
       var _tblEId = null,
-        _tblDrag = { active: false, r1: -1, c1: -1, r2: -1, c2: -1 };
+        _tblDrag = { active: false, r1: -1, c1: -1, r2: -1, c2: -1 },
+        _tblSnap = null;            /* snapshot of {data, heading, hasHeader} for Cancel */
 
       function openTableEditor(id) {
         _tblEId = id;
@@ -5840,12 +5890,54 @@ if (gm("product:price:amount")) {
         var b = getBl(id);
         if (!b) return;
         b.data = migrateTableData(b.data);
+        /* Snapshot current state so Cancel can revert any edits made
+           while the editor was open. Deep-clone via JSON to detach refs. */
+        _tblSnap = { data: JSON.parse(JSON.stringify(b.data)), heading: b.heading || '', hasHeader: !!b.hasHeader };
         var hBtn = document.getElementById("tbl-header-btn");
         if (hBtn) hBtn.classList.toggle("on", b.hasHeader);
         var hIn = document.getElementById("tbl-editor-heading");
         if (hIn) hIn.value = b.heading || "";
         _renderTblE();
         document.getElementById("tbl-editor-overlay").classList.add("show");
+      }
+
+      /* Cancel: revert the table block to its snapshot taken at open time.
+         If the block had no real content originally (all cells empty AND no
+         heading), remove it entirely so an unwanted insert can be backed out. */
+      function cancelTableEditor() {
+        if (_tblEId && _tblSnap) {
+          var b = getBl(_tblEId);
+          if (b) {
+            /* "Original blank" = no heading AND every cell is either empty OR
+               matches the default placeholder "Column N" used by newTableData().
+               This lets a freshly-added table be cancelled away even though its
+               header row pre-fills with Column 1 / Column 2 / Column 3. */
+            var isPlaceholder = function(v){
+              var t = (v == null ? '' : String(v)).trim();
+              return t === '' || /^Column\s+\d+$/i.test(t);
+            };
+            var origBlank = !(_tblSnap.heading || '').trim();
+            if (origBlank) {
+              origBlank = (_tblSnap.data || []).every(function(row){
+                return row.every(function(cell){ return isPlaceholder(cell && cell.v); });
+              });
+            }
+            if (origBlank) {
+              /* remove the block entirely */
+              var idx = blocks.findIndex(function(bb){ return bb.id === _tblEId; });
+              if (idx >= 0) blocks.splice(idx, 1);
+            } else {
+              b.data      = _tblSnap.data;
+              b.heading   = _tblSnap.heading;
+              b.hasHeader = _tblSnap.hasHeader;
+            }
+          }
+        }
+        _tblSnap = null;
+        document.getElementById("tbl-editor-overlay").classList.remove("show");
+        _tblEId = null;
+        renderBlocks();
+        go();
       }
       function onTblEditorHeading(v) {
         if (!_tblEId) return;
@@ -5855,10 +5947,81 @@ if (gm("product:price:amount")) {
         save();
       }
       function closeTableEditor() {
+        _tblSnap = null;            /* keep current edits — discard snapshot */
         document.getElementById("tbl-editor-overlay").classList.remove("show");
         _tblEId = null;
         renderBlocks();
         go();
+      }
+
+      /* ============================================================
+         CELL LINK SUPPORT  (Option B)
+         The "Insert Link" toolbar button wraps the currently-selected
+         text inside a cell with markdown link syntax `[text](url)`.
+         The renderer (parseLinks) converts it back to an <a> tag for
+         preview and export, so the cell's raw value stays portable.
+         ============================================================ */
+      var _tblLinkSel = null;     /* {r, c, start, end, text}  — last captured cell selection */
+
+      /* Called on the link button's MOUSEDOWN — runs BEFORE focus moves
+         off the cell, so window.getSelection() still points at the cell. */
+      function _tblCaptureCellSelection(ev) {
+        var sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) { _tblLinkSel = null; return; }
+        var range = sel.getRangeAt(0);
+        /* Walk up to the <td> that holds the selection. */
+        var node = range.startContainer;
+        while (node && node.nodeType !== 1) node = node.parentNode;
+        if (!node) { _tblLinkSel = null; return; }
+        var td = node.closest ? node.closest('td[data-r]') : null;
+        if (!td) { _tblLinkSel = null; return; }
+        /* Require selection to be within a single text node so offsets map
+           cleanly to cell.v (which is a plain string). */
+        if (range.startContainer !== range.endContainer || range.startContainer.nodeType !== 3) {
+          _tblLinkSel = null; return;
+        }
+        var selText = range.toString();
+        if (!selText) { _tblLinkSel = null; return; }
+        _tblLinkSel = {
+          r: parseInt(td.getAttribute('data-r'), 10),
+          c: parseInt(td.getAttribute('data-c'), 10),
+          start: range.startOffset,
+          end:   range.endOffset,
+          text:  selText
+        };
+      }
+
+      /* Toolbar button click — open URL prompt, then wrap selection. */
+      function tblInsertCellLink() {
+        if (!_tblLinkSel || !_tblLinkSel.text) {
+          toast('Select some text inside a cell first', '#3a2a1e'); return;
+        }
+        if (!_tblEId) return;
+        var url = prompt('Enter URL (https://… or relative like /collections/x):', '');
+        if (url === null) return;
+        url = url.trim();
+        if (!url) return;
+        /* For absolute URLs without a scheme, prepend https:// (matches the
+           existing link popup helper used by other blocks). Relative paths
+           starting with "/" pass through unchanged so internal links work. */
+        if (!/^(https?:)?\/\//i.test(url) && url.charAt(0) !== '/' && url.indexOf(':') === -1) {
+          url = 'https://' + url;
+        }
+        var b = getBl(_tblEId); if (!b) return;
+        b.data = migrateTableData(b.data);
+        var rIdx = _tblLinkSel.r, cIdx = _tblLinkSel.c;
+        var cell = migrateCell(b.data[rIdx][cIdx]);
+        var v = cell.v || '';
+        /* Replace just the selected range in cell.v with the markdown wrapper. */
+        var before = v.slice(0, _tblLinkSel.start);
+        var midd   = v.slice(_tblLinkSel.start, _tblLinkSel.end);
+        var after  = v.slice(_tblLinkSel.end);
+        cell.v = before + '[' + midd + '](' + url + ')' + after;
+        b.data[rIdx][cIdx] = cell;
+        _tblLinkSel = null;
+        _renderTblE();
+        go();
+        toast('Link inserted', '#1a4e2a');
       }
       function openTblPaste() {
         document.getElementById("tbl-paste-input").value = "";
@@ -6038,7 +6201,21 @@ if (gm("product:price:amount")) {
       function _tblCI(r, c, el) {
         var b = getBl(_tblEId);
         if (!b || !b.data[r] || !b.data[r][c]) return;
-        b.data[r][c].v = el.textContent || "";
+        /* Use innerText (NOT textContent) so visually-rendered line breaks
+           from <br> and block-level wrappers are captured as "\n" — and
+           when the user backspaces them away, the breaks disappear too.
+           Normalize CRLF / CR to LF for cross-browser consistency. */
+        var v = (el.innerText != null ? el.innerText : el.textContent || '');
+        v = v.replace(/\r\n?/g, '\n');
+        /* innerText sometimes adds a trailing "\n" for an empty <div> at the
+           end (Chrome). Strip a single trailing newline so it doesn't show
+           as a phantom blank line in the preview. */
+        v = v.replace(/\n$/, '');
+        b.data[r][c].v = v;
+        /* Live-refresh the iframe preview so adding/removing newlines
+           (and any other cell edit) is reflected immediately. go() is
+           internally debounced (~80ms), so this is safe on every keystroke. */
+        go();
       }
 
       function _tblUpdBtns() {
@@ -6911,8 +7088,10 @@ if (gm("product:price:amount")) {
                 var cs = cell.cs || 1,
                   rs = cell.rs || 1;
                 var attrs = (cs > 1 ? ' colspan="' + cs + '"' : "") + (rs > 1 ? ' rowspan="' + rs + '"' : "");
-                if (isHead) prevHtml += "<th" + attrs + ">" + eh(cell.v || "") + "</th>";
-                else prevHtml += "<td" + attrs + ">" + eh(cell.v || "") + "</td>";
+                /* parseLinks → real <a> tags; \n → <br> so multi-line cells keep their breaks. */
+                var prevCellHtml = parseLinks(cell.v || "").replace(/\n/g, "<br>");
+                if (isHead) prevHtml += "<th" + attrs + ">" + prevCellHtml + "</th>";
+                else prevHtml += "<td" + attrs + ">" + prevCellHtml + "</td>";
               });
               prevHtml += "</tr>";
             });
@@ -7877,8 +8056,10 @@ var title = document.getElementById("f-title").value.trim(),
                 var cs = cell.cs || 1,
                   rs = cell.rs || 1;
                 var attrs = (cs > 1 ? ' colspan="' + cs + '"' : "") + (rs > 1 ? ' rowspan="' + rs + '"' : "");
-                if (isHead) h += "<th" + attrs + ">" + eh(cell.v || "") + "</th>";
-                else h += "<td" + attrs + ">" + eh(cell.v || "") + "</td>";
+                /* parseLinks → real <a> tags; \n → <br> so multi-line cells keep their breaks. */
+                var cellHtml = parseLinks(cell.v || "").replace(/\n/g, "<br>");
+                if (isHead) h += "<th" + attrs + ">" + cellHtml + "</th>";
+                else h += "<td" + attrs + ">" + cellHtml + "</td>";
               });
               if (isHead) h += "</tr></thead>\n<tbody>\n";
               else h += "</tr>\n";
