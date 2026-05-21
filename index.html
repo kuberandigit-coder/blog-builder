@@ -3028,7 +3028,7 @@
       }
     </style>
   </head>
-  <body>
+         <body>
 <div id="import-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;align-items:center;justify-content:center;">
   <div style="background:#fff;width:min(720px,92vw);max-height:88vh;display:flex;flex-direction:column;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;font-family:Jost,sans-serif;">
     <div style="padding:14px 18px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
@@ -4659,13 +4659,48 @@ function unmangle(el, map) {
 }
 function hasClass(el, name, map) { return unmangle(el, map).indexOf(name) !== -1; }
 
-/* Convert an .sb body element back into the plain-text format used by
-   block.text (one paragraph per line, blank line preserved). */
+/* Convert an element's innerHTML back to the editor's markdown-ish syntax
+   so re-imports preserve inline formatting:
+       <a href="X">Y</a>   ->  [Y](X)
+       <strong>X</strong>  ->  **X**     (also <b>)
+       <em>X</em>          ->  _X_       (also <i>)
+       <u>X</u>            ->  __X__
+       <br>                ->  \n
+   Any other tags are dropped but their text content is preserved. */
+function htmlToMarkdown(el) {
+  if (!el) return '';
+  /* Clone so we can mutate without touching the parsed doc. */
+  var root = el.cloneNode(true);
+  /* Replace <br> with literal newline text nodes first. */
+  Array.from(root.querySelectorAll('br')).forEach(function(br){
+    br.parentNode.replaceChild(document.createTextNode('\n'), br);
+  });
+  /* Recursive walk producing a string. */
+  function walk(node) {
+    if (node.nodeType === 3) return node.nodeValue || '';
+    if (node.nodeType !== 1) return '';
+    var inner = '';
+    for (var i = 0; i < node.childNodes.length; i++) inner += walk(node.childNodes[i]);
+    var tag = node.tagName;
+    if (tag === 'A') {
+      var href = node.getAttribute('href') || '';
+      return '[' + inner + '](' + href + ')';
+    }
+    if (tag === 'STRONG' || tag === 'B') return '**' + inner + '**';
+    if (tag === 'EM'     || tag === 'I') return '_' + inner + '_';
+    if (tag === 'U') return '__' + inner + '__';
+    return inner;
+  }
+  return walk(root).trim();
+}
+
+/* Convert an .sb body element back into the editor's text format:
+   one paragraph per line, with inline markdown preserved. */
 function sbToText(sbEl) {
   if (!sbEl) return "";
   var ps = sbEl.querySelectorAll('p');
   var lines = [];
-  ps.forEach(function(p){ lines.push((p.textContent || "").trim()); });
+  ps.forEach(function(p){ lines.push(htmlToMarkdown(p)); });
   return lines.join("\n");
 }
 
@@ -4709,9 +4744,10 @@ function parseSectionEl(secEl, map) {
     imgHM: 200, pairHM: 160, tripleHM: 140
   };
 
-  /* Heading: any descendant <h2> (genCM rewrites .sh to a 'heading' class) */
+  /* Heading: any descendant <h2> (genCM rewrites .sh to a 'heading' class).
+     Use htmlToMarkdown so inline links / bold inside the heading survive. */
   var hEl = secEl.querySelector(':scope > h2, :scope > h3, :scope > h1');
-  if (hEl) b.heading = (hEl.textContent || '').trim();
+  if (hEl) b.heading = htmlToMarkdown(hEl);
 
   /* Body: a div containing <p> children (.sb) */
   var sbEl = null;
@@ -4785,7 +4821,7 @@ function parseBulletsEl(el, map) {
     }
     Array.from(ul.querySelectorAll(':scope > li')).forEach(function(li){
       var span = li.querySelector('span') || li;
-      b.items.push((span.textContent || '').trim());
+      b.items.push(htmlToMarkdown(span));
     });
   }
   if (!b.items.length) b.items = [''];
@@ -4802,7 +4838,7 @@ function parseHighlightEl(el, map) {
     b.label = (labelEl.textContent || '').trim();
     labelEl.remove();
   }
-  b.text = (clone.textContent || '').trim();
+  b.text = htmlToMarkdown(clone);
   /* style sniff: gradient bg => tip/info/warn/note;  italic / quote class => quote */
   var cls = Array.from(el.classList || []).join(' ');
   if (/hl-quote/.test(cls) || /font-style:\s*italic/.test(el.getAttribute('style') || '')) b.hlStyle = 'quote';
@@ -4974,18 +5010,9 @@ function parseTableEl(el, map) {
     b.hasHeader = !!tbl.querySelector('thead');
     /* Convert a cell element's inner HTML back into the editor's markdown
        format: `<a href="X">Y</a>` → `[Y](X)`, then strip remaining tags. */
-    function cellToMarkdown(el) {
-      if (!el) return '';
-      var clone = el.cloneNode(true);
-      Array.from(clone.querySelectorAll('a')).forEach(function(a){
-        var href = a.getAttribute('href') || '';
-        var txt  = (a.textContent || '').trim();
-        var md = document.createTextNode('[' + txt + '](' + href + ')');
-        a.parentNode.replaceChild(md, a);
-      });
-      /* Drop any other tags (spans etc.) but keep their text. */
-      return (clone.textContent || '').trim();
-    }
+    /* Delegate to the global htmlToMarkdown helper so cells preserve
+       links, bold, italic, underline, and <br> line breaks. */
+    function cellToMarkdown(el) { return htmlToMarkdown(el); }
     /* header row */
     var hr = tbl.querySelector('thead tr');
     if (hr) {
@@ -5047,7 +5074,7 @@ function parseCtaEl(el, map) {
   var desc = findChildByClass(el, 'cta-desc', map);
   if (desc) {
     var lines = [];
-    desc.querySelectorAll('p').forEach(function(p){ lines.push((p.textContent || '').trim()); });
+    desc.querySelectorAll('p').forEach(function(p){ lines.push(htmlToMarkdown(p)); });
     b.desc = lines.join('\n');
   }
   var aEl = el.querySelector('a');
@@ -5077,7 +5104,7 @@ function parseImgTxtEl(el, map) {
   var h = el.querySelector('h2, h3');
   if (h) b.heading = (h.textContent || '').trim();
   var lines = [];
-  el.querySelectorAll('p').forEach(function(p){ lines.push((p.textContent || '').trim()); });
+  el.querySelectorAll('p').forEach(function(p){ lines.push(htmlToMarkdown(p)); });
   b.text = lines.join('\n');
   return b;
 }
@@ -5184,7 +5211,7 @@ function runImportHTML() {
         if (bid === '__details' && child.tagName === 'P') kind = 'intro';
 
         if (kind === 'title') { if (titleText === null) titleText = (child.textContent || '').trim(); return; }
-        if (kind === 'intro') { if (introText === null) introText = (child.innerHTML || child.textContent || '').replace(/<[^>]+>/g,'').trim(); return; }
+        if (kind === 'intro') { if (introText === null) introText = htmlToMarkdown(child); return; }
         if (kind === 'hero')  {
           var hi = child.querySelector('img');
           if (hi && heroUrl === null) heroUrl = hi.getAttribute('src') || '';
@@ -7752,11 +7779,9 @@ w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
           s.hf +
           ";font-size:" +
           (s.bs - 1) +
-          "px;font-weight:600;padding:12px 16px;text-align:left;letter-spacing:.04em;}.blog-table td{padding:11px 16px;border-bottom:1px solid " +
-          s.div +
-          ";color:" +
+          "px;font-weight:600;padding:12px 16px;text-align:left;letter-spacing:.04em;border:1.5px solid #2a3550;}.blog-table td{padding:11px 16px;border:1.5px solid #2a3550;color:" +
           s.bdy +
-          ";line-height:1.5;}.blog-table tr:last-child td{border-bottom:none;}.blog-table tbody tr:nth-child(even) td{background:rgba(0,0,0,.025);}.blog-table tbody tr:hover td{background:rgba(0,0,0,.04);transition:background .15s;}.hotspot-block{margin-bottom:" +
+          ";line-height:1.5;}.blog-table tbody tr:nth-child(even) td{background:rgba(0,0,0,.025);}.blog-table tbody tr:hover td{background:rgba(0,0,0,.04);transition:background .15s;}.hotspot-block{margin-bottom:" +
           s.sg +
           "px;}.hotspot-heading{font-family:" +
           s.hf +
@@ -8191,12 +8216,24 @@ var title = document.getElementById("f-title").value.trim(),
             var imgH  = b.imgH  || 380;
             var imgHM = b.imgHM || 220;
             var flexDir = imgPos === "left" ? "row" : "row-reverse";
-            _inlineStyles.push(
-              '<style>@media(max-width:768px){' +
-              '#imgtxt-' + b.id + '{flex-direction:column !important;}' +
-              '#imgtxt-' + b.id + ' .imgtxt-img{width:100% !important;height:' + imgHM + 'px !important;}' +
-              '}</style>'
-            );
+            /* Mobile layout for Image+Text:
+                 - Stack as a column (image on TOP, text BELOW) regardless of
+                   the desktop imgPos setting. flex-direction:column-reverse
+                   would put text first, so we use plain `column` AND force
+                   the image to be the first child via `order:0` / text `order:1`.
+                 - Image takes full width with the mobile-specific height.
+                 - Tighten the gap and add a small spacer so the text reads as
+                   a clean section beneath the image. */
+            /* Emit the mobile media query inline (the _inlineStyles array
+               is never appended to the output — known issue with the existing
+               per-section overrides). Putting the <style> tag directly in `h`
+               guarantees it reaches both preview and exported HTML. */
+            h += '<style>@media(max-width:768px){' +
+                 '#imgtxt-' + b.id + '{flex-direction:column !important;gap:16px !important;align-items:stretch !important;}' +
+                 '#imgtxt-' + b.id + ' .imgtxt-img{order:0 !important;width:100% !important;height:' + imgHM + 'px !important;margin:0 !important;}' +
+                 '#imgtxt-' + b.id + ' .imgtxt-content{order:1 !important;width:100% !important;}' +
+                 '#imgtxt-' + b.id + ' .imgtxt-content .sh{margin-top:0 !important;}' +
+                 '}</style>\n';
             h += '<div id="imgtxt-' + b.id + '" class="imgtxt-block" style="flex-direction:' + flexDir + ';" data-block-id="' + b.id + '">\n';
             if (b.imgUrl) {
               h += '<img class="imgtxt-img" src="' + ea(b.imgUrl) + '" alt="' + ea(b.imgAlt || b.heading || "") + '" loading="lazy" style="width:' + imgW + '%;height:' + imgH + 'px;">\n';
