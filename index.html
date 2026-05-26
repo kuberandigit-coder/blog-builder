@@ -7098,12 +7098,6 @@ if (gm("product:price:amount")) {
               "','heading',this.value)\">" +
               fl +
               makeLinkBtn("f-" + b.id, "function(){go();}") +
-              '<button class="add-mini faq" onclick="addFaqItem(\'' +
-              b.id +
-              "')\">+ Add Q&amp;A</button>" +
-              '<button class="add-mini faq" style="margin-top:4px;" onclick="bulkAddFaq(\'' +
-              b.id +
-              "')\">&#8853; Bulk Paste Q&amp;A</button>" +
               '<button class="add-mini faq" style="margin-top:4px;" onclick="bulkAddFaqSchema(\'' +
               b.id +
               "')\">&#123;&#125; Paste Schema JSON-LD</button>";
@@ -8247,8 +8241,6 @@ var title = document.getElementById("f-title").value.trim(),
               h += '</div>\n';
             }
             h += '</div>\n</div>\n';
-          } else if (b.type === "review") {
-            /* migrate old format (direct props) to items array */
           } else if (b.type === "review") {
             /* migrate old format (direct props) to items array */
             if (!b.items && (b.name !== undefined || b.text !== undefined)) {
