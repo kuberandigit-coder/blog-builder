@@ -3352,7 +3352,8 @@
               <button class="addbtn add-review" onclick="addBlock('review')">&#11088; Customer Review</button>
               <button class="addbtn add-imageonly" onclick="addBlock('imageonly')">🖼 Image </button>
               <button class="addbtn add-imgtxt" onclick="addBlock('imgtxt')">&#128444; Image + Text</button>
-             
+              <button class="addbtn add-imglist" onclick="addBlock('imglist')">&#128247; Img List</button>
+
             </div>
 
             <div class="sumbar" id="sumbar" style="display: none">
@@ -4406,6 +4407,16 @@
   imgW: 100, imgH: 400, pairH: 280, tripleH: 220,
   imgHM: 200, pairHM: 160, tripleHM: 140
 });
+        else if (type === "imglist") Object.assign(b, {
+  heading: "Types of Products",
+  imgTL: "", imgBL: "", imgTR: "", imgBR: "",
+  imgH: 200, imgHM: 150,
+  bgColor: "",
+  items: [
+    { title: "Item One", bullets: ["First benefit or detail.", "Second benefit or detail."] },
+    { title: "Item Two", bullets: ["First benefit or detail.", "Second benefit or detail."] }
+  ]
+});
 if (insertAt !== undefined && insertAt >= 0 && insertAt <= blocks.length) {
   blocks.splice(insertAt, 0, b);
 } else {
@@ -4469,7 +4480,8 @@ closeBtn.innerHTML = '<button style="padding:5px 20px;background:#f0f0f0;border:
     { type:'bullets',  icon:'●',  label:'Bullets'    },
     { type:'review',   icon:'⭐', label:'Review'     },
     { type:'imageonly',icon:'🖼', label:'Image'      },
-    { type:'imgtxt',   icon:'🖼', label:'Img + Text' }
+    { type:'imgtxt',   icon:'🖼', label:'Img + Text' },
+    { type:'imglist',  icon:'📋', label:'Img List'   }
   ].forEach(function(item) {
     var el = document.createElement('div');
     el.className = 'insert-menu-item';
@@ -5362,6 +5374,37 @@ function runImportHTML() {
           go();
         }
       }
+      /* ── IMGLIST helpers ─────────────────────────────────────── */
+      function addImgListItem(id) {
+        var b = getBl(id); if (!b) return;
+        b.items.push({ title: "", bullets: [""] });
+        renderBlocks(); go();
+      }
+      function delImgListItem(id, idx) {
+        var b = getBl(id);
+        if (b && b.items && b.items.length > 1) { b.items.splice(idx, 1); renderBlocks(); go(); }
+      }
+      function onInImgListItem(id, idx, val) {
+        var b = getBl(id);
+        if (b && b.items && b.items[idx] !== undefined) { b.items[idx].title = val; go(); }
+      }
+      function addImgListBullet(id, idx) {
+        var b = getBl(id); if (!b || !b.items[idx]) return;
+        b.items[idx].bullets.push(""); renderBlocks(); go();
+      }
+      function delImgListBullet(id, idx, bi) {
+        var b = getBl(id);
+        if (b && b.items[idx] && b.items[idx].bullets.length > 1) {
+          b.items[idx].bullets.splice(bi, 1); renderBlocks(); go();
+        }
+      }
+      function onInImgListBullet(id, idx, bi, val) {
+        var b = getBl(id);
+        if (b && b.items[idx] && b.items[idx].bullets[bi] !== undefined) {
+          b.items[idx].bullets[bi] = val; go();
+        }
+      }
+      /* ── end IMGLIST helpers ─────────────────────────────────── */
       function setListStyle(id, s) {
         var b = getBl(id);
         if (b) b.listStyle = s;
@@ -6620,7 +6663,9 @@ if (gm("product:price:amount")) {
                             ? "Bullets: " + (b.heading || "List").slice(0, 20)
                             : b.type === "imgtxt"
   ? "Img+Txt: " + (b.heading || "Section").slice(0, 20)
-  : "Review: " + ((b.items && b.items[0] && b.items[0].name) || "Customer").slice(0, 22);
+  : b.type === "imglist"
+    ? "ImgList: " + (b.heading || "List").slice(0, 20)
+    : "Review: " + ((b.items && b.items[0] && b.items[0].name) || "Customer").slice(0, 22);
 
 
           var hd =
@@ -7498,6 +7543,38 @@ body =
 
 
 
+          } else if (b.type === "imglist") {
+            var ilItems = b.items || [];
+            var ilEditor = '';
+            ilItems.forEach(function(item, ii) {
+              ilEditor += '<div style="border:1px solid #e8e8e8;border-radius:8px;padding:8px 10px;margin-bottom:8px;">';
+              ilEditor += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">';
+              ilEditor += '<span style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;">Item ' + (ii+1) + '</span>';
+              if (ilItems.length > 1) ilEditor += '<button class="ibtn x" onclick="delImgListItem(\'' + b.id + "'," + ii + ')">&#10005;</button>';
+              ilEditor += '</div>';
+              ilEditor += '<input type="text" placeholder="Item title..." value="' + ea(item.title||"") + '" oninput="onInImgListItem(\'' + b.id + "'," + ii + ',this.value)">';
+              (item.bullets||[]).forEach(function(blt, bi) {
+                ilEditor += '<div style="display:flex;gap:4px;align-items:center;margin-top:4px;">';
+                ilEditor += '<input type="text" style="flex:1;" placeholder="Sub-bullet text..." value="' + ea(blt) + '" oninput="onInImgListBullet(\'' + b.id + "'," + ii + ',' + bi + ',this.value)">';
+                if ((item.bullets||[]).length > 1) ilEditor += '<button class="ibtn x" onclick="delImgListBullet(\'' + b.id + "'," + ii + ',' + bi + ')">&#10005;</button>';
+                ilEditor += '</div>';
+              });
+              ilEditor += '<button class="add-mini" style="margin-top:6px;" onclick="addImgListBullet(\'' + b.id + "'," + ii + ')">+ sub-bullet</button>';
+              ilEditor += '</div>';
+            });
+            body =
+              '<input type="text" placeholder="Section heading..." value="' + ea(b.heading||"") + '" oninput="onIn(\'' + b.id + "','heading',this.value)\">" +
+              '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:.08em;text-transform:uppercase;margin:8px 0 4px;">📸 Images (2 left + 2 right)</div>' +
+              '<input type="url" placeholder="Top-left image URL" value="' + ea(b.imgTL||"") + '" oninput="onIn(\'' + b.id + "','imgTL',this.value)\">" +
+              '<input type="url" placeholder="Bottom-left image URL" value="' + ea(b.imgBL||"") + '" oninput="onIn(\'' + b.id + "','imgBL',this.value)\">" +
+              '<input type="url" placeholder="Top-right image URL" value="' + ea(b.imgTR||"") + '" oninput="onIn(\'' + b.id + "','imgTR',this.value)\">" +
+              '<input type="url" placeholder="Bottom-right image URL" value="' + ea(b.imgBR||"") + '" oninput="onIn(\'' + b.id + "','imgBR',this.value)\">" +
+              '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">🖥 Desktop H</span><input type="range" min="80" max="500" step="10" value="' + (b.imgH||200) + '" oninput="onIn(\'' + b.id + "','imgH',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px'\"><span class=\"rval\">" + (b.imgH||200) + "px</span></div>" +
+              '<div class="rrow"><span class="flabel" style="font-size:11px;color:#666;min-width:90px;">📱 Mobile H</span><input type="range" min="60" max="400" step="10" value="' + (b.imgHM||150) + '" oninput="onIn(\'' + b.id + "','imgHM',parseInt(this.value));this.nextElementSibling.textContent=this.value+'px'\"><span class=\"rval\">" + (b.imgHM||150) + "px</span></div>" +
+              '<div style="font-size:10px;font-weight:700;color:#888;letter-spacing:.08em;text-transform:uppercase;margin:8px 0 4px;">📋 List Items</div>' +
+              ilEditor +
+              '<button class="add-mini bullet" onclick="addImgListItem(\'' + b.id + "')\">+ Add Item</button>";
+
           } else if (b.type === "review") {
             if (!b.items && (b.name !== undefined || b.text !== undefined)) {
               b.items = [{ name: b.name||"", location: b.location||"", rating: b.rating||5, text: b.text||"", verified: !!b.verified, date: b.date||"" }];
@@ -7875,6 +7952,18 @@ w.innerHTML = hd + '<div class="bbody">' + body + "</div>";
 ".imgtxt-content{flex:1;min-width:0;}" +
 ".imgtxt-content .sh{margin-bottom:6px;}" +
 ".imgtxt-subheading{font-family:" + s.bf + ";font-size:" + (s.bs + 2) + "px;font-weight:600;color:" + s.hdg + ";margin-bottom:12px;line-height:1.3;}" +
+".imglist-block{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:20px;align-items:start;margin-bottom:" + s.sg + "px;}" +
+".imglist-imgs{display:flex;flex-direction:column;gap:10px;}" +
+".imglist-imgs img{width:100%;object-fit:cover;border-radius:6px;display:block;}" +
+".imglist-content{padding:0 8px;}" +
+".imglist-heading{font-family:" + s.hf + ";font-size:" + (s.hs - 2) + "px;font-weight:700;color:" + s.hdg + ";margin-bottom:16px;line-height:1.25;}" +
+".imglist-items{list-style:none;margin:0;padding:0;counter-reset:imglist-counter;}" +
+".imglist-item{counter-increment:imglist-counter;margin-bottom:14px;padding-left:0;}" +
+".imglist-item-title{font-family:" + s.bf + ";font-size:" + (s.bs + 1) + "px;font-weight:700;color:" + s.hdg + ";margin-bottom:4px;display:flex;align-items:baseline;gap:8px;}" +
+".imglist-item-title::before{content:counter(imglist-counter);font-size:" + (s.bs + 4) + "px;font-weight:900;color:" + s.ac + ";min-width:24px;}" +
+".imglist-bullets{list-style:disc;margin:4px 0 0 32px;padding:0;}" +
+".imglist-bullets li{font-family:" + s.bf + ";font-size:" + s.bs + "px;color:" + s.tc + ";line-height:1.55;margin-bottom:3px;}" +
+"@media(max-width:768px){.imglist-block{grid-template-columns:1fr;gap:14px;}.imglist-imgs{flex-direction:row;flex-wrap:wrap;}.imglist-imgs img{flex:1 1 45%;max-width:50%;}}" +
 
           /* RESPONSIVE */
           "@media(max-width:768px){.article{padding:28px 18px 60px;}.title{font-size:clamp(26px,7vw," +
@@ -8242,6 +8331,42 @@ var title = document.getElementById("f-title").value.trim(),
               h += '</div>\n';
             }
             h += '</div>\n</div>\n';
+          } else if (b.type === "imglist") {
+            var ilBgStyle = b.bgColor ? 'style="background:' + b.bgColor + ';"' : '';
+            var ilImgStyle = 'style="height:' + (b.imgH||200) + 'px;object-fit:cover;"';
+            var ilImgHM = b.imgHM || 150;
+            h += '<style>@media(max-width:768px){#imglist-' + b.id + ' .imglist-imgs img{height:' + ilImgHM + 'px !important;}}</style>\n';
+            h += '<div id="imglist-' + b.id + '" class="imglist-block" ' + ilBgStyle + ' data-block-id="' + b.id + '">\n';
+            /* Left images */
+            h += '<div class="imglist-imgs">\n';
+            if (b.imgTL) h += '<img src="' + ea(b.imgTL) + '" ' + ilImgStyle + ' alt="" loading="lazy">\n';
+            if (b.imgBL) h += '<img src="' + ea(b.imgBL) + '" ' + ilImgStyle + ' alt="" loading="lazy">\n';
+            h += '</div>\n';
+            /* Center content */
+            h += '<div class="imglist-content">\n';
+            if ((b.heading||'').trim()) h += '<h2 class="imglist-heading">' + parseContent(b.heading) + '</h2>\n';
+            var ilItems2 = b.items || [];
+            if (ilItems2.length) {
+              h += '<ol class="imglist-items">\n';
+              ilItems2.forEach(function(item) {
+                h += '<li class="imglist-item">\n';
+                h += '<div class="imglist-item-title">' + eh(item.title||'') + '</div>\n';
+                if (item.bullets && item.bullets.length) {
+                  h += '<ul class="imglist-bullets">\n';
+                  item.bullets.forEach(function(blt) { if ((blt||'').trim()) h += '<li>' + parseLinks(blt) + '</li>\n'; });
+                  h += '</ul>\n';
+                }
+                h += '</li>\n';
+              });
+              h += '</ol>\n';
+            }
+            h += '</div>\n';
+            /* Right images */
+            h += '<div class="imglist-imgs">\n';
+            if (b.imgTR) h += '<img src="' + ea(b.imgTR) + '" ' + ilImgStyle + ' alt="" loading="lazy">\n';
+            if (b.imgBR) h += '<img src="' + ea(b.imgBR) + '" ' + ilImgStyle + ' alt="" loading="lazy">\n';
+            h += '</div>\n';
+            h += '</div>\n';
           } else if (b.type === "review") {
             /* migrate old format (direct props) to items array */
             if (!b.items && (b.name !== undefined || b.text !== undefined)) {
