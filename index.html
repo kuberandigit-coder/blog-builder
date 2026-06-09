@@ -7938,7 +7938,7 @@ var title = document.getElementById("f-title").value.trim(),
             }
             if (b.imageType === "single" && b.imgUrl) {
               var siMH = b.imgHM || 200;
-             _inlineStyles.push('<style>@media(max-width:768px){#simg-' + b.id + '{height:' + siMH + 'px !important;}}</style>');
+             h += '<style>@media(max-width:768px){#simg-' + b.id + '{height:' + siMH + 'px !important;}}</style>\n';
               var siStyle =
                 "width:" + (b.imgW || 100) + "%;height:" + (b.imgH || 400) + "px;object-fit:cover;display:block;";
               var si = '<img id="simg-' + b.id + '" class="simg" style="' + siStyle + '" src="' + ea(b.imgUrl) + '" alt="' + ea(b.imgAlt || b.heading || "") + '" loading="lazy">';
@@ -8173,7 +8173,7 @@ var title = document.getElementById("f-title").value.trim(),
             } else if (b.type === "imageonly") {
   if (b.imageType === "single" && b.imgUrl) {
     var siMH = b.imgHM || 200;
-    _inlineStyles.push('<style>@media(max-width:768px){#simg-' + b.id + '{height:' + siMH + 'px !important;}}</style>');
+    h += '<style>@media(max-width:768px){#simg-' + b.id + '{height:' + siMH + 'px !important;}}</style>\n';
     var siStyle = "width:" + (b.imgW||100) + "%;height:" + (b.imgH||400) + "px;object-fit:cover;display:block;";
     var si = '<img id="simg-' + b.id + '" class="simg" style="' + siStyle + '" src="' + ea(b.imgUrl) + '" alt="' + ea(b.imgAlt || "") + '" loading="lazy">';
     h += '<div class="section" data-block-id="' + b.id + '">\n';
