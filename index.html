@@ -168,7 +168,7 @@
         text-align: center;
         line-height: 14px;
       }
-      #main {
+#main {
         position: fixed;
         top: 56px;
         left: 0;
@@ -2345,8 +2345,23 @@
       .add-imageonly:hover { background: #eaf5ea; }
       .add-imgtxt { border: 2px dashed #f0a060; color: #a04800; }
       .add-imgtxt:hover { background: #fff5ed; }
-      .add-imglist { border: 2px dashed #7eb8d4; color: #1a5f7a; }
+      .add-imglist { border: 2px dashed #7eb8d4; color: #1a5f7a; position: relative; }
       .add-imglist:hover { background: #eaf4fb; }
+      .add-imglist::after {
+        content: "NEW";
+        position: absolute;
+        top: -8px;
+        right: -6px;
+        background: #e53935;
+        color: #fff;
+        font-size: 8px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        padding: 2px 5px;
+        border-radius: 4px;
+        line-height: 1.4;
+        pointer-events: none;
+      }
       /* ── HIGHLIGHT SWATCHES ── */
       .hl-swatch-row {
         display: flex;
@@ -3254,7 +3269,13 @@
         >
         <span class="badge" id="badge">0 blocks</span>
       </div>
-      <div class="top-actions">
+<div class="top-actions">
+        <div id="imglist-banner" style="display:flex;align-items:center;gap:8px;background:#0f2a50;border:1px solid #2a6aaa;border-radius:7px;padding:5px 10px;">
+          <span style="background:#e53935;color:#fff;font-size:9px;font-weight:800;letter-spacing:.1em;padding:2px 7px;border-radius:4px;text-transform:uppercase;flex-shrink:0;">NEW</span>
+          <span style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;color:#a8d0f8;letter-spacing:.03em;white-space:nowrap;">Image List</span>
+          <button onclick="dismissImgListBanner();addBlock('imglist');setTimeout(function(){document.getElementById('left-scroll').scrollTo({top:document.getElementById('left-scroll').scrollHeight,behavior:'smooth'});},120);" style="padding:5px 12px;background:#1e4080;color:#c5d8f5;border:1px solid #4a80d0;border-radius:5px;cursor:pointer;font-family:'Jost',sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;" onmouseover="this.style.background='#2a5aaa'" onmouseout="this.style.background='#1e4080'">&#128247; Show Me</button>
+          <button onclick="dismissImgListBanner();" style="background:none;border:none;color:#4a6899;cursor:pointer;font-size:14px;padding:0 3px;flex-shrink:0;line-height:1;" title="Dismiss">&#10005;</button>
+        </div>
         <button class="tbtn-top" id="btn-tpl-top" onclick="openTplModal()">&#128196; Templates</button>
         <button class="tbtn-top" id="btn-history-top" onclick="openHistory()">
           &#128336; History <span class="hist-badge" id="hist-top-badge">0</span>
@@ -3263,6 +3284,8 @@
         <button class="tbtn-top" id="btn-dl" onclick="doDownload()">&#8595; Download HTML</button>
       </div>
     </div>
+   <div id="main">
+</div>
     <div id="main">
       <div id="left">
         <div class="etabs">
@@ -4410,13 +4433,17 @@
   imgHM: 200, pairHM: 160, tripleHM: 140
 });
         else if (type === "imglist") Object.assign(b, {
-  heading: "Types of Products",
-  imgTL: "", imgBL: "", imgTR: "", imgBR: "",
+  heading: "Why Choose Our Products",
+  imgTL: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80",
+  imgBL: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80",
+  imgTR: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400&q=80",
+  imgBR: "https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=400&q=80",
   imgH: 200, imgHM: 150,
   bgColor: "",
   items: [
-    { title: "Item One", bullets: ["First benefit or detail.", "Second benefit or detail."] },
-    { title: "Item Two", bullets: ["First benefit or detail.", "Second benefit or detail."] }
+    { title: "Premium Quality", bullets: ["Crafted with the finest materials.", "Built to last for years of use."] },
+    { title: "Fast Delivery", bullets: ["Same-day dispatch on all orders.", "Free shipping on orders over £50."] },
+    { title: "Easy Returns", bullets: ["30-day hassle-free return policy.", "Full refund, no questions asked."] }
   ]
 });
 if (insertAt !== undefined && insertAt >= 0 && insertAt <= blocks.length) {
@@ -4483,7 +4510,7 @@ closeBtn.innerHTML = '<button style="padding:5px 20px;background:#f0f0f0;border:
     { type:'review',   icon:'⭐', label:'Review'     },
     { type:'imageonly',icon:'🖼', label:'Image'      },
     { type:'imgtxt',   icon:'🖼', label:'Img + Text' },
-    { type:'imglist',  icon:'📋', label:'Img List'   }
+    { type:'imglist',  icon:'📷', label:'Image List <span style="background:#e53935;color:#fff;font-size:7px;font-weight:800;padding:1px 4px;border-radius:3px;vertical-align:middle;letter-spacing:.06em;">NEW</span>' }
   ].forEach(function(item) {
     var el = document.createElement('div');
     el.className = 'insert-menu-item';
@@ -11244,8 +11271,17 @@ function useTemplate(idx) {
       document.getElementById("tpl-overlay").addEventListener("click", function (e) {
         if (e.target === this) closeTplModal();
       });
-
+function dismissImgListBanner(){
+        var b=document.getElementById('imglist-banner');
+        if(b) b.style.display='none';
+        document.getElementById('main').style.top='56px';
+      }
+     function dismissImgListBanner(){
+        var b=document.getElementById('imglist-banner');
+        if(b) b.style.display='none';
+      }
       loadHistFromStorage();
+      
       checkDraftOnLoad();
       go();
       /* inject format toolbar into static intro field */
