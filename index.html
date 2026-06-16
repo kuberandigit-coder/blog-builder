@@ -8056,7 +8056,7 @@ var title = document.getElementById("f-title").value.trim(),
             }
             if (b.imageType === "single" && b.imgUrl) {
               var siMH = b.imgHM || 200;
-             h += '<style>@media(max-width:768px){#simg-' + b.id + '{height:' + siMH + 'px !important;}}</style>\n';
+             _inlineStylesCollector.push('<style>@media(max-width:768px){#simg-' + b.id + '{height:' + siMH + 'px !important;}}</style>');
               var siStyle =
                 "width:" + (b.imgW || 100) + "%;height:" + (b.imgH || 400) + "px;object-fit:cover;display:block;";
               var si = '<img id="simg-' + b.id + '" class="simg" style="' + siStyle + '" src="' + ea(b.imgUrl) + '" alt="' + ea(b.imgAlt || b.heading || "") + '" loading="lazy">';
@@ -8291,7 +8291,7 @@ var title = document.getElementById("f-title").value.trim(),
             } else if (b.type === "imageonly") {
   if (b.imageType === "single" && b.imgUrl) {
     var siMH = b.imgHM || 200;
-    h += '<style>@media(max-width:768px){#simg-' + b.id + '{height:' + siMH + 'px !important;}}</style>\n';
+    _inlineStylesCollector.push('<style>@media(max-width:768px){#simg-' + b.id + '{height:' + siMH + 'px !important;}}</style>');
     var siStyle = "width:" + (b.imgW||100) + "%;height:" + (b.imgH||400) + "px;object-fit:cover;display:block;";
     var si = '<img id="simg-' + b.id + '" class="simg" style="' + siStyle + '" src="' + ea(b.imgUrl) + '" alt="' + ea(b.imgAlt || "") + '" loading="lazy">';
     h += '<div class="section" data-block-id="' + b.id + '">\n';
@@ -8300,7 +8300,7 @@ var title = document.getElementById("f-title").value.trim(),
     h += "</div>\n";
   } else if (b.imageType === "pair" && (b.imgL || b.imgR)) {
     var pairMH = b.pairHM || 160;
-    h += '<style>@media(max-width:768px){#pair-' + b.id + ' img{height:' + pairMH + 'px !important;}}</style>';
+    _inlineStylesCollector.push('<style>@media(max-width:768px){#pair-' + b.id + ' img{height:' + pairMH + 'px !important;}}</style>');
     var pairStyle = "width:100%;height:" + (b.pairH||280) + "px;object-fit:cover;display:block;";
     h += '<div class="section" data-block-id="' + b.id + '">\n';
     h += '<div id="pair-' + b.id + '" class="pair">\n';
@@ -8311,7 +8311,7 @@ var title = document.getElementById("f-title").value.trim(),
     h += "</div>\n";
   } else if (b.imageType === "triple" && (b.imgL || b.imgM || b.imgR)) {
     var triMH = b.tripleHM || 140;
-    h += '<style>@media(max-width:768px){#tri-' + b.id + ' img{height:' + triMH + 'px !important;}}</style>\n';
+    _inlineStylesCollector.push('<style>@media(max-width:768px){#tri-' + b.id + ' img{height:' + triMH + 'px !important;}}</style>');
     var triStyle = "width:100%;height:" + (b.tripleH||220) + "px;object-fit:cover;display:block;";
     h += '<div class="section" data-block-id="' + b.id + '">\n';
     h += '<div id="tri-' + b.id + '" class="triple">\n';
@@ -8337,16 +8337,16 @@ var title = document.getElementById("f-title").value.trim(),
                  - Image takes full width with the mobile-specific height.
                  - Tighten the gap and add a small spacer so the text reads as
                    a clean section beneath the image. */
-            /* Emit the mobile media query inline (the _inlineStyles array
-               is never appended to the output — known issue with the existing
-               per-section overrides). Putting the <style> tag directly in `h`
-               guarantees it reaches both preview and exported HTML. */
-            h += '<style>@media(max-width:768px){' +
+            /* Hoist the mobile media query into the top-level <style> block via
+               _inlineStylesCollector (appended through _extraCSS for both preview
+               and export). Keeps the article body free of mid-content <style>
+               nodes, which Shopify's parser/newline_to_br turns into phantom gaps. */
+            _inlineStylesCollector.push('<style>@media(max-width:768px){' +
                  '#imgtxt-' + b.id + '{flex-direction:column !important;gap:16px !important;align-items:stretch !important;}' +
                  '#imgtxt-' + b.id + ' .imgtxt-img{order:0 !important;width:100% !important;height:' + imgHM + 'px !important;margin:0 !important;}' +
                  '#imgtxt-' + b.id + ' .imgtxt-content{order:1 !important;width:100% !important;}' +
                  '#imgtxt-' + b.id + ' .imgtxt-content .sh{margin-top:0 !important;}' +
-                 '}</style>\n';
+                 '}</style>');
             h += '<div id="imgtxt-' + b.id + '" class="imgtxt-block" style="flex-direction:' + flexDir + ';" data-block-id="' + b.id + '">\n';
             if (b.imgUrl) {
               h += '<img class="imgtxt-img" src="' + ea(b.imgUrl) + '" alt="' + ea(b.imgAlt || b.heading || "") + '" loading="lazy" style="width:' + imgW + '%;height:' + imgH + 'px;">\n';
@@ -8364,7 +8364,7 @@ var title = document.getElementById("f-title").value.trim(),
             var ilBgStyle = b.bgColor ? 'style="background:' + b.bgColor + ';"' : '';
             var ilImgStyle = 'style="height:' + (b.imgH||200) + 'px;object-fit:cover;"';
             var ilImgHM = b.imgHM || 150;
-            h += '<style>@media(max-width:768px){#imglist-' + b.id + ' .imglist-imgs img{height:' + ilImgHM + 'px !important;}}</style>\n';
+            _inlineStylesCollector.push('<style>@media(max-width:768px){#imglist-' + b.id + ' .imglist-imgs img{height:' + ilImgHM + 'px !important;}}</style>');
             h += '<div id="imglist-' + b.id + '" class="imglist-block" ' + ilBgStyle + ' data-block-id="' + b.id + '">\n';
             /* Left images */
             h += '<div class="imglist-imgs">\n';
